@@ -21,10 +21,16 @@ API_BASE = "https://osu.ppy.sh/api/v2"
 
 app = FastAPI(title="osu! Stats App API")
 
-# ローカル開発中はフロントエンド(Vite: 5173番)からのアクセスを許可
+# ローカル開発用 + 本番のフロントエンドURLからのアクセスを許可
+# フロントエンドをVercel等にデプロイしたら、そのURLをここに追加する
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    # "https://your-frontend.vercel.app",  # ← フロントエンドのURLが決まったらコメントを外して追加
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
