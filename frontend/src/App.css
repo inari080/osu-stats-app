@@ -422,20 +422,6 @@
   animation: rainbow-shift 2s linear infinite;
 }
 
-@keyframes;
-}
-to {
-  transform: rotate(360deg);
-}
-}
-
-@keyframes;
-}
-100% {
-  transform: translateX(200%);
-}
-}
-
 @keyframes glow-pulse-gold-card {
   0%,
   100% {
