@@ -142,8 +142,6 @@
 }
 
 .user-card {
-  position: relative;
-  isolation: isolate;
   display: flex;
   gap: 20px;
   align-items: center;
@@ -152,8 +150,6 @@
   padding: 20px;
   margin-bottom: 24px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  overflow: visible;
-  transition: transform 0.2s ease;
 }
 
 .avatar {
@@ -173,324 +169,6 @@
   color: #555;
 }
 
-/* ===== グローバルランク帯ティア =====
-   通常 < 銅(10万〜30万) < 銀(1万以内) < 金(1000以内) < 最高級(100以内) */
-
-.placement-badge {
-  position: absolute;
-  top: -12px;
-  left: 16px;
-  padding: 3px 12px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.8rem;
-  color: white;
-  background: #333;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  z-index: 2;
-}
-
-/* 銅ティア: 静かな銅色の光 */
-.user-card.tier-bronze {
-  background: linear-gradient(120deg, rgba(205, 127, 50, 0.1), #fafafa 60%);
-  box-shadow: 0 0 10px rgba(205, 127, 50, 0.25), 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(205, 127, 50, 0.4);
-}
-
-/* 銀ティア: シルバーシマー */
-.user-card.tier-silver {
-  background: linear-gradient(120deg, rgba(192, 192, 192, 0.14), #fafafa 60%);
-  box-shadow: 0 0 14px rgba(192, 192, 192, 0.35), 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(192, 192, 192, 0.5);
-}
-.user-card.tier-silver::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background: linear-gradient(
-          100deg,
-          transparent,
-          rgba(255, 255, 255, 0.5),
-          transparent
-  );
-  transform: translateX(-100%);
-
-  pointer-events: none;
-}
-
-/* 金ティア: ゴールドグロー+シマー */
-.user-card.tier-gold {
-  background: linear-gradient(120deg, rgba(255, 204, 34, 0.16), #fafafa 60%);
-  box-shadow: 0 0 18px rgba(255, 204, 34, 0.45), 0 2px 8px rgba(0, 0, 0, 0.05);
-  border: 1px solid rgba(255, 204, 34, 0.6);
-  animation: glow-pulse-gold-card 2.6s ease-in-out infinite;
-}
-.user-card.tier-gold::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background: linear-gradient(
-          100deg,
-          transparent,
-          rgba(255, 255, 255, 0.6),
-          transparent
-  );
-  transform: translateX(-100%);
-
-  pointer-events: none;
-}
-
-/* 最高級ティア(Top100): 虹の光がまわる特別な枠 */
-.user-card.tier-legendary {
-  background: #fdfdfd;
-}
-.user-card.tier-legendary::before {
-  content: "";
-  position: absolute;
-  inset: -3px;
-  border-radius: 15px;
-  padding: 3px;
-  background: conic-gradient(
-          from 0deg,
-          #ff8fc7,
-          #7ee8fa,
-          #ffd700,
-          #b98aff,
-          #ff8fc7
-  );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-
-  z-index: -1;
-}
-.user-card.tier-legendary::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background: linear-gradient(
-          100deg,
-          transparent,
-          rgba(255, 255, 255, 0.55),
-          transparent
-  );
-  transform: translateX(-100%);
-
-  pointer-events: none;
-}
-
-/* ===== TOP10専用演出(1位に近づくほど豪華・派手に) =====
-   各順位に固有のリングカラー・回転速度・グローを割り当てる。
-   tier-legendary(虹回転枠)の上に、それぞれの個性を重ねる形。 */
-
-.user-card[class*="place-"] {
-  animation-duration: 1s; /* place-N::before の spin speed で個別上書き */
-}
-
-/* 10位: シルバーコメット、ゆったり */
-.user-card.place-10::before {
-  background: conic-gradient(from 0deg, #c0c0c0, #ffffff, #9a9a9a, #c0c0c0);
-
-}
-.user-card.place-10 { box-shadow: 0 0 14px rgba(192, 192, 192, 0.5); }
-
-/* 9位: アンバーの温かい光 */
-.user-card.place-9::before {
-  background: conic-gradient(from 0deg, #ffb347, #ff8c00, #ffd580, #ffb347);
-
-}
-.user-card.place-9 { box-shadow: 0 0 15px rgba(255, 140, 0, 0.5); }
-
-/* 8位: サファイアの波 */
-.user-card.place-8::before {
-  background: conic-gradient(from 0deg, #4169e1, #00bfff, #a0e9ff, #4169e1);
-
-}
-.user-card.place-8 { box-shadow: 0 0 16px rgba(0, 191, 255, 0.5); }
-
-/* 7位: ルビーの鼓動 */
-.user-card.place-7::before {
-  background: conic-gradient(from 0deg, #e0115f, #ff4d6d, #ff9eb5, #e0115f);
-  animation: glow-pulse-ruby 1.8s ease-in-out infinite;
-}
-
-/* 6位: エメラルドシマー */
-.user-card.place-6::before {
-  background: conic-gradient(from 0deg, #50c878, #00ff9c, #b7ffdf, #50c878);
-
-}
-.user-card.place-6 { box-shadow: 0 0 17px rgba(0, 255, 156, 0.5); }
-
-/* 5位: 紫のオーロラ */
-.user-card.place-5::before {
-  background: conic-gradient(
-          from 0deg,
-          #9b59b6,
-          #6a5acd,
-          #ff6ec7,
-          #6a5acd,
-          #9b59b6
-  );
-
-}
-.user-card.place-5 {
-  box-shadow: 0 0 18px rgba(155, 89, 182, 0.55);
-  animation: card-float 2.6s ease-in-out infinite;
-}
-
-/* 4位: エレクトリックシアン、稲妻フリッカー */
-.user-card.place-4::before {
-  background: conic-gradient(from 0deg, #00f5ff, #ffffff, #0ff0fc, #00f5ff);
-  animation: flicker-electric 1.4s steps(2) infinite;
-}
-.user-card.place-4 {
-  box-shadow: 0 0 20px rgba(0, 245, 255, 0.6);
-  animation: card-float 2.2s ease-in-out infinite;
-}
-
-/* 3位: ブロンズフレア(炎のような揺らぎ) */
-.user-card.place-3::before {
-  background: conic-gradient(from 0deg, #cd7f32, #ff8c00, #ffe08c, #cd7f32);
-  animation: flame-flicker 1.2s ease-in-out infinite;
-}
-.user-card.place-3 {
-  box-shadow: 0 0 22px rgba(255, 140, 0, 0.6);
-  animation: card-float 2s ease-in-out infinite;
-}
-
-/* 2位: プラチナ、高速シマー+強いグロー */
-.user-card.place-2::before {
-  background: conic-gradient(
-          from 0deg,
-          #e5e4e2,
-          #ffffff,
-          #b0c4de,
-          #e5e4e2,
-          #ffffff
-  );
-
-}
-.user-card.place-2 {
-  box-shadow: 0 0 26px rgba(220, 220, 255, 0.75);
-  animation: card-breathe 1.8s ease-in-out infinite;
-}
-
-/* 1位: 至高。虹が高速回転+呼吸するように拡大縮小+強いグロー+きらめき */
-.user-card.place-1::before {
-  background: conic-gradient(
-          from 0deg,
-          #ff3b3b,
-          #ff9a3b,
-          #fff23b,
-          #3bff6e,
-          #3bb8ff,
-          #8a3bff,
-          #ff3bd4,
-          #ff3b3b
-  );
-
-}
-.user-card.place-1 {
-  box-shadow: 0 0 32px rgba(255, 100, 200, 0.7), 0 0 50px rgba(120, 180, 255, 0.4);
-  animation: card-breathe 1.3s ease-in-out infinite;
-}
-.user-card.place-1 .avatar {
-  animation: avatar-glow 1.3s ease-in-out infinite;
-}
-.user-card.place-1::after,
-.user-card.place-2::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 12px;
-  background: linear-gradient(
-          100deg,
-          transparent,
-          rgba(255, 255, 255, 0.7),
-          transparent
-  );
-  transform: translateX(-100%);
-
-  pointer-events: none;
-}
-.user-card.place-1 .placement-badge {
-  background: linear-gradient(135deg, #ff3b3b, #fff23b, #3bb8ff, #8a3bff);
-  background-size: 300% 300%;
-  animation: rainbow-shift 2s linear infinite;
-}
-
-@keyframes glow-pulse-gold-card {
-  0%,
-  100% {
-    box-shadow: 0 0 14px rgba(255, 204, 34, 0.35), 0 2px 8px rgba(0, 0, 0, 0.05);
-  }
-  50% {
-    box-shadow: 0 0 24px rgba(255, 204, 34, 0.6), 0 2px 8px rgba(0, 0, 0, 0.05);
-  }
-}
-
-@keyframes glow-pulse-ruby {
-  0%,
-  100% {
-    box-shadow: 0 0 14px rgba(224, 17, 95, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 22px rgba(255, 77, 109, 0.65);
-  }
-}
-
-@keyframes flicker-electric {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.75;
-  }
-}
-
-@keyframes flame-flicker {
-  0%,
-  100% {
-    filter: brightness(1);
-  }
-  50% {
-    filter: brightness(1.25);
-  }
-}
-
-@keyframes card-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-@keyframes card-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.015);
-  }
-}
-
-@keyframes avatar-glow {
-  0%,
-  100% {
-    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
-  }
-  50% {
-    filter: drop-shadow(0 0 12px rgba(255, 100, 200, 0.9));
-  }
-}
 
 .chart-card {
   background: #fafafa;
@@ -523,16 +201,10 @@
 }
 
 .score-row {
-  position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
+  padding: 8px 0;
   border-bottom: 1px solid #eee;
-  border-left: 3px solid transparent;
-  border-radius: 4px;
-  overflow: hidden;
-  transition: transform 0.15s ease;
 }
 
 .score-row:last-child {
@@ -544,16 +216,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  position: relative;
-  z-index: 1;
 }
 
 .score-pp {
   color: #ff66ab;
   font-weight: 600;
   margin: 0 12px;
-  position: relative;
-  z-index: 1;
 }
 
 .score-rank {
@@ -566,209 +234,50 @@
   font-weight: 700;
   font-size: 0.85rem;
   color: white;
-  position: relative;
-  z-index: 1;
 }
 
-/* ===== ランク別の豪華さ段階演出 =====
-   D/C/B: 控えめ(左ボーダー色のみ)
-   A: ほんのり色付き背景
-   S: 金色背景+静的グロー
-   SH: シルバーシマー(光が横切るアニメーション)
-   SS/X: 虹グラデーション+パルスグロー
-   SSH/XH: 全部盛り(虹アニメーション境界+強いパルス+シマー) */
-
-/* D以下: グレーの左ボーダーのみ */
-.score-row.rank-d {
-  border-left-color: #999;
-}
-.rank-d.score-rank {
-  background: #999;
-}
-
-/* C: ピンクの左ボーダーのみ */
-.score-row.rank-c {
-  border-left-color: #ff8fc7;
-}
-.rank-c.score-rank {
-  background: #ff8fc7;
-}
-
-/* B: 青の左ボーダーのみ */
-.score-row.rank-b {
-  border-left-color: #6bb3ff;
-}
-.rank-b.score-rank {
-  background: #6bb3ff;
-}
-
-/* A: 緑の左ボーダー+ほんのり背景色 */
-.score-row.rank-a {
-  border-left-color: #7cd657;
-  background: linear-gradient(90deg, rgba(124, 214, 87, 0.08), transparent 60%);
-}
-.rank-a.score-rank {
-  background: #7cd657;
-}
-
-/* S: 金の左ボーダー+背景+静的グロー */
-.score-row.rank-s {
-  border-left-color: #ffcc22;
-  background: linear-gradient(90deg, rgba(255, 204, 34, 0.14), transparent 65%);
-  box-shadow: inset 0 0 12px rgba(255, 204, 34, 0.15);
-}
-.rank-s.score-rank {
-  background: #ffcc22;
-  color: #4a3900;
-  box-shadow: 0 0 6px rgba(255, 204, 34, 0.6);
-}
-
-/* SH: シルバー、光が横切るシマーアニメーション */
-.score-row.rank-sh {
-  border-left-color: #b9b9d8;
-  background: linear-gradient(90deg, rgba(185, 185, 216, 0.16), transparent 65%);
-  box-shadow: inset 0 0 12px rgba(185, 185, 216, 0.2);
-}
-.score-row.rank-sh::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -60%;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(
-          100deg,
-          transparent,
-          rgba(255, 255, 255, 0.55),
-          transparent
-  );
-  animation: shimmer-sweep 3.2s ease-in-out infinite;
-}
-.rank-sh.score-rank {
-  background: linear-gradient(135deg, #d9d9f0, #ffffff);
+/* SSH / XH: 虹色っぽい特別枠なので明るいシルバー系 */
+.rank-ssh {
+  background: linear-gradient(135deg, #b0e0e6, #ffffff);
   color: #444;
-  box-shadow: 0 0 6px rgba(200, 200, 230, 0.7);
 }
 
-/* SS / X: 虹グラデーション背景 + パルスするグロー */
-.score-row.rank-ss {
-  border-left: 3px solid;
-  border-image: linear-gradient(180deg, #7ee8fa, #eec0c6, #ffd700) 1;
-  background: linear-gradient(
-          90deg,
-          rgba(126, 232, 250, 0.12),
-          rgba(238, 192, 198, 0.12),
-          rgba(255, 215, 0, 0.12)
-  );
-  animation: glow-pulse-ss 2.4s ease-in-out infinite;
-}
-.score-row.rank-ss::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -60%;
-  width: 40%;
-  height: 100%;
-  background: linear-gradient(
-          100deg,
-          transparent,
-          rgba(255, 255, 255, 0.6),
-          transparent
-  );
-  animation: shimmer-sweep 2.4s ease-in-out infinite;
-}
-.rank-ss.score-rank {
+/* SS / X: 特別感のある虹グラデーション */
+.rank-ss {
   background: linear-gradient(135deg, #7ee8fa, #eec0c6, #ffd700);
   color: #333;
 }
 
-/* SSH / XH: 全部盛り(虹アニメーション+強いグロー+シマー+わずかな拡大) */
-.score-row.rank-ssh {
-  border-left: 3px solid;
-  border-image: linear-gradient(
-          180deg,
-          #ff8fc7,
-          #7ee8fa,
-          #ffd700,
-          #b98aff,
-          #ff8fc7
-  )
-  1;
-  background: linear-gradient(
-          90deg,
-          rgba(255, 143, 199, 0.14),
-          rgba(126, 232, 250, 0.14),
-          rgba(255, 215, 0, 0.14),
-          rgba(185, 138, 255, 0.14)
-  );
-  background-size: 300% 100%;
-  animation: rainbow-shift 5s linear infinite, glow-pulse-ssh 1.8s ease-in-out infinite;
-  z-index: 1;
-}
-.score-row.rank-ssh::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -60%;
-  width: 35%;
-  height: 100%;
-  background: linear-gradient(
-          100deg,
-          transparent,
-          rgba(255, 255, 255, 0.8),
-          transparent
-  );
-  animation: shimmer-sweep 1.8s ease-in-out infinite;
-}
-.score-row.rank-ssh:hover {
-  transform: scale(1.01);
-}
-.rank-ssh.score-rank {
-  background: linear-gradient(135deg, #ff8fc7, #7ee8fa, #ffd700, #b98aff);
-  background-size: 300% 100%;
-  animation: rainbow-shift 3s linear infinite;
-  color: #333;
-  font-weight: 800;
+/* SH: シルバー */
+.rank-sh {
+  background: linear-gradient(135deg, #d9d9f0, #ffffff);
+  color: #444;
 }
 
-@keyframes shimmer-sweep {
-  0% {
-    left: -60%;
-  }
-  100% {
-    left: 120%;
-  }
+/* S: ゴールド寄りの黄色 */
+.rank-s {
+  background: #ffcc22;
+  color: #4a3900;
 }
 
-@keyframes glow-pulse-ss {
-  0%,
-  100% {
-    box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.15);
-  }
-  50% {
-    box-shadow: inset 0 0 18px rgba(126, 232, 250, 0.3);
-  }
+/* A: 緑 */
+.rank-a {
+  background: #7cd657;
 }
 
-@keyframes glow-pulse-ssh {
-  0%,
-  100% {
-    box-shadow: inset 0 0 14px rgba(255, 143, 199, 0.25),
-    0 0 8px rgba(255, 215, 0, 0.25);
-  }
-  50% {
-    box-shadow: inset 0 0 22px rgba(126, 232, 250, 0.4),
-    0 0 14px rgba(185, 138, 255, 0.4);
-  }
+/* B: 青 */
+.rank-b {
+  background: #6bb3ff;
 }
 
-@keyframes rainbow-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 300% 50%;
-  }
+/* C: ピンク */
+.rank-c {
+  background: #ff8fc7;
+}
+
+/* D以下: グレー */
+.rank-d {
+  background: #999;
 }
 
 .beatmapset-list {

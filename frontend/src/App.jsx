@@ -34,22 +34,7 @@ function osuBeatmapUrl(beatmapsetId, beatmapId, mode) {
   }`;
 }
 
-// グローバルランクに応じた「豪華さティア」のクラス名を返す
-// 1-100: 最高級 / 101-1000: 金 / 1001-100000: 銀 / 100001-300000: 銅 / それ以外: 通常
-function getRankTierClass(globalRank) {
-  if (!globalRank || globalRank < 1) return "";
-  if (globalRank <= 100) return "tier-legendary";
-  if (globalRank <= 1000) return "tier-gold";
-  if (globalRank <= 100000) return "tier-silver";
-  if (globalRank <= 300000) return "tier-bronze";
-  return "";
-}
-
-// TOP10は1人ずつ専用の演出クラスを持つ(1位に近いほど豪華)
-function getTopPlacementClass(globalRank) {
-  if (!globalRank || globalRank < 1 || globalRank > 10) return "";
-  return `place-${globalRank}`;
-}
+// osu!のランク(XH, X, SH, S, A, B, C, D)に応じてCSSクラス名を返す
 function getRankClass(rank) {
   if (!rank) return "";
   const normalized = rank.toUpperCase();
@@ -320,7 +305,7 @@ function CompareTopPlays({ playerResults, mode = "osu" }) {
                   <p className="chart-empty">取得できませんでした</p>
               ) : (
                   (scores ?? []).slice(0, 5).map((score) => (
-                      <div key={score.id} className={`score-row ${getRankClass(score.rank)}`}>
+                      <div key={score.id} className="score-row">
                   <span className="beatmap-title">
                     <a
                         href={osuBeatmapUrl(score.beatmapset?.id, score.beatmap?.id, mode)}
@@ -929,16 +914,7 @@ function PlayerSearch() {
         {error && <p className="error">{error}</p>}
 
         {user && (
-            <div
-                className={`user-card ${getRankTierClass(
-                    user.statistics?.global_rank
-                )} ${getTopPlacementClass(user.statistics?.global_rank)}`}
-            >
-              {getTopPlacementClass(user.statistics?.global_rank) && (
-                  <div className="placement-badge">
-                    #{user.statistics.global_rank}
-                  </div>
-              )}
+            <div className="user-card">
               <a
                   href={osuProfileUrl(user.id, mode)}
                   target="_blank"
@@ -1004,7 +980,7 @@ function PlayerSearch() {
             <div className="scores-list">
               <h3>Top Plays</h3>
               {scores.slice(0, 5).map((score) => (
-                  <div key={score.id} className={`score-row ${getRankClass(score.rank)}`}>
+                  <div key={score.id} className="score-row">
               <span className="beatmap-title">
                 <a
                     href={osuBeatmapUrl(score.beatmapset?.id, score.beatmap?.id, mode)}
