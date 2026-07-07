@@ -200,10 +200,16 @@
 }
 
 .score-row {
+  position: relative;
   display: flex;
   justify-content: space-between;
-  padding: 8px 0;
+  align-items: center;
+  padding: 8px 12px;
   border-bottom: 1px solid #eee;
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  overflow: hidden;
+  transition: transform 0.15s ease;
 }
 
 .score-row:last-child {
@@ -215,12 +221,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  position: relative;
+  z-index: 1;
 }
 
 .score-pp {
   color: #ff66ab;
   font-weight: 600;
   margin: 0 12px;
+  position: relative;
+  z-index: 1;
 }
 
 .score-rank {
@@ -233,50 +243,209 @@
   font-weight: 700;
   font-size: 0.85rem;
   color: white;
+  position: relative;
+  z-index: 1;
 }
 
-/* SSH / XH: 虹色っぽい特別枠なので明るいシルバー系 */
-.rank-ssh {
-  background: linear-gradient(135deg, #b0e0e6, #ffffff);
+/* ===== ランク別の豪華さ段階演出 =====
+   D/C/B: 控えめ(左ボーダー色のみ)
+   A: ほんのり色付き背景
+   S: 金色背景+静的グロー
+   SH: シルバーシマー(光が横切るアニメーション)
+   SS/X: 虹グラデーション+パルスグロー
+   SSH/XH: 全部盛り(虹アニメーション境界+強いパルス+シマー) */
+
+/* D以下: グレーの左ボーダーのみ */
+.score-row.rank-d {
+  border-left-color: #999;
+}
+.rank-d.score-rank {
+  background: #999;
+}
+
+/* C: ピンクの左ボーダーのみ */
+.score-row.rank-c {
+  border-left-color: #ff8fc7;
+}
+.rank-c.score-rank {
+  background: #ff8fc7;
+}
+
+/* B: 青の左ボーダーのみ */
+.score-row.rank-b {
+  border-left-color: #6bb3ff;
+}
+.rank-b.score-rank {
+  background: #6bb3ff;
+}
+
+/* A: 緑の左ボーダー+ほんのり背景色 */
+.score-row.rank-a {
+  border-left-color: #7cd657;
+  background: linear-gradient(90deg, rgba(124, 214, 87, 0.08), transparent 60%);
+}
+.rank-a.score-rank {
+  background: #7cd657;
+}
+
+/* S: 金の左ボーダー+背景+静的グロー */
+.score-row.rank-s {
+  border-left-color: #ffcc22;
+  background: linear-gradient(90deg, rgba(255, 204, 34, 0.14), transparent 65%);
+  box-shadow: inset 0 0 12px rgba(255, 204, 34, 0.15);
+}
+.rank-s.score-rank {
+  background: #ffcc22;
+  color: #4a3900;
+  box-shadow: 0 0 6px rgba(255, 204, 34, 0.6);
+}
+
+/* SH: シルバー、光が横切るシマーアニメーション */
+.score-row.rank-sh {
+  border-left-color: #b9b9d8;
+  background: linear-gradient(90deg, rgba(185, 185, 216, 0.16), transparent 65%);
+  box-shadow: inset 0 0 12px rgba(185, 185, 216, 0.2);
+}
+.score-row.rank-sh::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+          100deg,
+          transparent,
+          rgba(255, 255, 255, 0.55),
+          transparent
+  );
+  animation: shimmer-sweep 3.2s ease-in-out infinite;
+}
+.rank-sh.score-rank {
+  background: linear-gradient(135deg, #d9d9f0, #ffffff);
   color: #444;
+  box-shadow: 0 0 6px rgba(200, 200, 230, 0.7);
 }
 
-/* SS / X: 特別感のある虹グラデーション */
-.rank-ss {
+/* SS / X: 虹グラデーション背景 + パルスするグロー */
+.score-row.rank-ss {
+  border-left: 3px solid;
+  border-image: linear-gradient(180deg, #7ee8fa, #eec0c6, #ffd700) 1;
+  background: linear-gradient(
+          90deg,
+          rgba(126, 232, 250, 0.12),
+          rgba(238, 192, 198, 0.12),
+          rgba(255, 215, 0, 0.12)
+  );
+  animation: glow-pulse-ss 2.4s ease-in-out infinite;
+}
+.score-row.rank-ss::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+          100deg,
+          transparent,
+          rgba(255, 255, 255, 0.6),
+          transparent
+  );
+  animation: shimmer-sweep 2.4s ease-in-out infinite;
+}
+.rank-ss.score-rank {
   background: linear-gradient(135deg, #7ee8fa, #eec0c6, #ffd700);
   color: #333;
 }
 
-/* SH: シルバー */
-.rank-sh {
-  background: linear-gradient(135deg, #d9d9f0, #ffffff);
-  color: #444;
+/* SSH / XH: 全部盛り(虹アニメーション+強いグロー+シマー+わずかな拡大) */
+.score-row.rank-ssh {
+  border-left: 3px solid;
+  border-image: linear-gradient(
+          180deg,
+          #ff8fc7,
+          #7ee8fa,
+          #ffd700,
+          #b98aff,
+          #ff8fc7
+  )
+  1;
+  background: linear-gradient(
+          90deg,
+          rgba(255, 143, 199, 0.14),
+          rgba(126, 232, 250, 0.14),
+          rgba(255, 215, 0, 0.14),
+          rgba(185, 138, 255, 0.14)
+  );
+  background-size: 300% 100%;
+  animation: rainbow-shift 5s linear infinite, glow-pulse-ssh 1.8s ease-in-out infinite;
+  z-index: 1;
+}
+.score-row.rank-ssh::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 35%;
+  height: 100%;
+  background: linear-gradient(
+          100deg,
+          transparent,
+          rgba(255, 255, 255, 0.8),
+          transparent
+  );
+  animation: shimmer-sweep 1.8s ease-in-out infinite;
+}
+.score-row.rank-ssh:hover {
+  transform: scale(1.01);
+}
+.rank-ssh.score-rank {
+  background: linear-gradient(135deg, #ff8fc7, #7ee8fa, #ffd700, #b98aff);
+  background-size: 300% 100%;
+  animation: rainbow-shift 3s linear infinite;
+  color: #333;
+  font-weight: 800;
 }
 
-/* S: ゴールド寄りの黄色 */
-.rank-s {
-  background: #ffcc22;
-  color: #4a3900;
+@keyframes shimmer-sweep {
+  0% {
+    left: -60%;
+  }
+  100% {
+    left: 120%;
+  }
 }
 
-/* A: 緑 */
-.rank-a {
-  background: #7cd657;
+@keyframes glow-pulse-ss {
+  0%,
+  100% {
+    box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.15);
+  }
+  50% {
+    box-shadow: inset 0 0 18px rgba(126, 232, 250, 0.3);
+  }
 }
 
-/* B: 青 */
-.rank-b {
-  background: #6bb3ff;
+@keyframes glow-pulse-ssh {
+  0%,
+  100% {
+    box-shadow: inset 0 0 14px rgba(255, 143, 199, 0.25),
+    0 0 8px rgba(255, 215, 0, 0.25);
+  }
+  50% {
+    box-shadow: inset 0 0 22px rgba(126, 232, 250, 0.4),
+    0 0 14px rgba(185, 138, 255, 0.4);
+  }
 }
 
-/* C: ピンク */
-.rank-c {
-  background: #ff8fc7;
-}
-
-/* D以下: グレー */
-.rank-d {
-  background: #999;
+@keyframes rainbow-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 300% 50%;
+  }
 }
 
 .beatmapset-list {

@@ -305,7 +305,7 @@ function CompareTopPlays({ playerResults, mode = "osu" }) {
                   <p className="chart-empty">取得できませんでした</p>
               ) : (
                   (scores ?? []).slice(0, 5).map((score) => (
-                      <div key={score.id} className="score-row">
+                      <div key={score.id} className={`score-row ${getRankClass(score.rank)}`}>
                   <span className="beatmap-title">
                     <a
                         href={osuBeatmapUrl(score.beatmapset?.id, score.beatmap?.id, mode)}
@@ -980,7 +980,7 @@ function PlayerSearch() {
             <div className="scores-list">
               <h3>Top Plays</h3>
               {scores.slice(0, 5).map((score) => (
-                  <div key={score.id} className="score-row">
+                  <div key={score.id} className={`score-row ${getRankClass(score.rank)}`}>
               <span className="beatmap-title">
                 <a
                     href={osuBeatmapUrl(score.beatmapset?.id, score.beatmap?.id, mode)}
