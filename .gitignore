@@ -1,0 +1,17 @@
+# 環境変数(絶対にコミットしない)
+.env
+backend/.env
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Node / フロントエンド
+node_modules/
+dist/
+.vite/
+
+# OS
+.DS_Store

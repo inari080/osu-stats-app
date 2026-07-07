@@ -1,0 +1,130 @@
+.app {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  color: #2b2b2b;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.header h1 {
+  font-size: 2.2rem;
+  color: #ff66ab;
+  margin: 0;
+}
+
+.subtitle {
+  color: #777;
+  margin-top: 4px;
+}
+
+.search-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.search-form input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.search-form select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.search-form button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #ff66ab;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.search-form button:hover:not(:disabled) {
+  background: #ff4d9c;
+}
+
+.search-form button:disabled {
+  background: #ffb3d4;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #d9364b;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.user-card {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.user-info h2 {
+  margin: 0 0 8px 0;
+}
+
+.user-info p {
+  margin: 2px 0;
+  color: #555;
+}
+
+.scores-list {
+  background: #fafafa;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.scores-list h3 {
+  margin-top: 0;
+}
+
+.score-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.score-row:last-child {
+  border-bottom: none;
+}
+
+.beatmap-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score-pp {
+  color: #ff66ab;
+  font-weight: 600;
+  margin: 0 12px;
+}
