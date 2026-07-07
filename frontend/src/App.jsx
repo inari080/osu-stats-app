@@ -839,6 +839,10 @@ function PlayerSearch() {
     }
   };
 
+  const singlePlayerResult = user
+      ? [{ username: user.username, user, scores, error: null }]
+      : [];
+
   return (
       <>
         <form className="search-form" onSubmit={handleSearch}>
@@ -874,10 +878,38 @@ function PlayerSearch() {
             </div>
         )}
 
+        {user && (
+            <div className="chart-card">
+              <h3>サブステータス</h3>
+              <CompareStatsTable playerResults={singlePlayerResult} rows={SUB_STAT_ROWS} />
+            </div>
+        )}
+
         {scores.length > 0 && (
             <div className="chart-card">
               <h3>pp推移(トッププレイ)</h3>
               <PpTrendChart scores={scores} />
+            </div>
+        )}
+
+        {scores.length > 0 && (
+            <div className="chart-card">
+              <h3>活動時間帯</h3>
+              <ActivityTimeChart playerResults={singlePlayerResult} />
+            </div>
+        )}
+
+        {scores.length > 0 && (
+            <div className="chart-card">
+              <h3>ミス数・コンボ</h3>
+              <ComboMissCompare playerResults={singlePlayerResult} />
+            </div>
+        )}
+
+        {scores.length > 0 && (
+            <div className="chart-card">
+              <h3>BPM傾向</h3>
+              <BpmCompare playerResults={singlePlayerResult} />
             </div>
         )}
 
