@@ -4,6 +4,7 @@ import {
   Line,
   BarChart,
   Bar,
+  Cell,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -178,18 +179,51 @@ function CombinedPpTrendChart({ playerResults }) {
 }
 
 // 基本ステータスの並列表示用テーブル
-const COMPARE_STAT_ROWS = [
-  { key: "global_rank", label: "Rank", format: (v) => (v ? `#${v}` : "N/A") },
-  { key: "pp", label: "PP", format: (v) => (v != null ? v.toFixed(2) : "N/A") },
+const BASIC_STAT_ROWS = [
+  { key: "global_rank", label: "Rank", value: (s) => (s?.global_rank ? `#${s.global_rank}` : "N/A") },
+  { key: "pp", label: "PP", value: (s) => (s?.pp != null ? s.pp.toFixed(2) : "N/A") },
   {
     key: "hit_accuracy",
     label: "Accuracy",
-    format: (v) => (v != null ? `${v.toFixed(2)}%` : "N/A"),
+    value: (s) => (s?.hit_accuracy != null ? `${s.hit_accuracy.toFixed(2)}%` : "N/A"),
   },
-  { key: "play_count", label: "Play Count", format: (v) => v ?? "N/A" },
+  { key: "play_count", label: "Play Count", value: (s) => s?.play_count ?? "N/A" },
 ];
 
-function CompareStatsTable({ playerResults }) {
+// サブステータスの並列表示用テーブル(レベル・総プレイ時間・Ranked Score等)
+const SUB_STAT_ROWS = [
+  {
+    key: "level",
+    label: "Level",
+    value: (s) =>
+        s?.level?.current != null ? `${s.level.current} (${s.level.progress ?? 0}%)` : "N/A",
+  },
+  {
+    key: "play_time",
+    label: "総プレイ時間",
+    value: (s) => (s?.play_time != null ? `${Math.round(s.play_time / 3600)}時間` : "N/A"),
+  },
+  {
+    key: "ranked_score",
+    label: "Ranked Score",
+    value: (s) => (s?.ranked_score != null ? s.ranked_score.toLocaleString() : "N/A"),
+  },
+  {
+    key: "country_rank",
+    label: "Country Rank",
+    value: (s) => (s?.country_rank ? `#${s.country_rank}` : "N/A"),
+  },
+  {
+    key: "replays_watched",
+    label: "リプレイ視聴数",
+    value: (s) =>
+        s?.replays_watched_by_others != null
+            ? s.replays_watched_by_others.toLocaleString()
+            : "N/A",
+  },
+];
+
+function CompareStatsTable({ playerResults, rows = BASIC_STAT_ROWS }) {
   return (
       <div className="compare-stats-table-wrapper">
         <table className="compare-stats-table">
@@ -208,13 +242,11 @@ function CompareStatsTable({ playerResults }) {
           </tr>
           </thead>
           <tbody>
-          {COMPARE_STAT_ROWS.map((row) => (
+          {rows.map((row) => (
               <tr key={row.key}>
                 <td className="compare-stat-label">{row.label}</td>
                 {playerResults.map(({ username, user, error }) => (
-                    <td key={username}>
-                      {error ? "-" : row.format(user?.statistics?.[row.key])}
-                    </td>
+                    <td key={username}>{error ? "-" : row.value(user?.statistics)}</td>
                 ))}
               </tr>
           ))}
@@ -433,6 +465,154 @@ function CommonBeatmapsTable({ playerResults }) {
   );
 }
 
+// トッププレイが達成された時間帯(UTC)を4時間区切りで集計する
+const TIME_BUCKETS = [
+  { label: "0-4時", min: 0, max: 4 },
+  { label: "4-8時", min: 4, max: 8 },
+  { label: "8-12時", min: 8, max: 12 },
+  { label: "12-16時", min: 12, max: 16 },
+  { label: "16-20時", min: 16, max: 20 },
+  { label: "20-24時", min: 20, max: 24 },
+];
+
+function buildActivityTimeDistribution(playerResults) {
+  return TIME_BUCKETS.map((bucket) => {
+    const row = { bucket: bucket.label };
+    playerResults.forEach(({ username, scores, error }) => {
+      if (error) return;
+      row[username] = (scores ?? []).filter((s) => {
+        if (!s.created_at) return false;
+        const hour = new Date(s.created_at).getUTCHours();
+        return hour >= bucket.min && hour < bucket.max;
+      }).length;
+    });
+    return row;
+  });
+}
+
+function ActivityTimeChart({ playerResults }) {
+  const validResults = playerResults.filter((r) => !r.error && r.scores?.length);
+  const data = buildActivityTimeDistribution(validResults);
+  const hasAnyData = data.some((row) =>
+      validResults.some(({ username }) => (row[username] ?? 0) > 0)
+  );
+
+  if (!hasAnyData) {
+    return (
+        <p className="chart-empty">
+          グラフを表示するにはトッププレイのデータが足りません。
+        </p>
+    );
+  }
+
+  return (
+      <div className="chart-wrapper">
+        <p className="chart-note">※ 達成時刻はUTC(協定世界時)基準です</p>
+        <ResponsiveContainer width="100%" height={260}>
+          <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis dataKey="bucket" tick={{ fontSize: 11, fill: "#777" }} />
+            <YAxis
+                tick={{ fontSize: 11, fill: "#777" }}
+                width={32}
+                allowDecimals={false}
+                label={{ value: "件数", angle: -90, position: "insideLeft", fontSize: 11 }}
+            />
+            <Tooltip contentStyle={{ fontSize: "0.85rem" }} />
+            <Legend wrapperStyle={{ fontSize: "0.85rem" }} />
+            {validResults.map(({ username }, idx) => (
+                <Bar
+                    key={username}
+                    dataKey={username}
+                    fill={COMPARE_COLORS[idx % COMPARE_COLORS.length]}
+                    radius={[4, 4, 0, 0]}
+                />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+  );
+}
+
+// プレイヤーごとの単一数値指標(平均max_combo、平均ミス数、平均BPMなど)を集計する
+function buildAveragePlayerMetric(playerResults, getValue) {
+  return playerResults
+      .filter((r) => !r.error)
+      .map(({ username, scores }) => {
+        const values = (scores ?? [])
+            .map(getValue)
+            .filter((v) => typeof v === "number" && !Number.isNaN(v));
+        const avg = values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+        return { username, value: Math.round(avg * 100) / 100 };
+      });
+}
+
+function SimplePlayerBarChart({ data, tooltipLabel, valueSuffix = "" }) {
+  const hasAnyData = data.some((row) => row.value > 0);
+
+  if (!hasAnyData) {
+    return (
+        <p className="chart-empty">
+          グラフを表示するにはトッププレイのデータが足りません。
+        </p>
+    );
+  }
+
+  return (
+      <div className="chart-wrapper">
+        <ResponsiveContainer width="100%" height={220}>
+          <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis dataKey="username" tick={{ fontSize: 11, fill: "#777" }} />
+            <YAxis tick={{ fontSize: 11, fill: "#777" }} width={40} />
+            <Tooltip
+                formatter={(value) => [`${value}${valueSuffix}`, tooltipLabel]}
+                contentStyle={{ fontSize: "0.85rem" }}
+            />
+            <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+              {data.map((entry, idx) => (
+                  <Cell key={entry.username} fill={COMPARE_COLORS[idx % COMPARE_COLORS.length]} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+  );
+}
+
+// ミス数・コンボ比較(平均max_combo、平均ミス数)
+function ComboMissCompare({ playerResults }) {
+  const comboData = buildAveragePlayerMetric(playerResults, (s) =>
+      typeof s.max_combo === "number" ? s.max_combo : null
+  );
+  const missData = buildAveragePlayerMetric(
+      playerResults,
+      (s) => s.statistics?.count_miss ?? s.count_miss ?? 0
+  );
+
+  return (
+      <div className="compare-dual-chart">
+        <div>
+          <h4 className="compare-subheading">平均Max Combo</h4>
+          <SimplePlayerBarChart data={comboData} tooltipLabel="平均Max Combo" valueSuffix="x" />
+        </div>
+        <div>
+          <h4 className="compare-subheading">平均ミス数(トッププレイ内)</h4>
+          <SimplePlayerBarChart data={missData} tooltipLabel="平均ミス数" valueSuffix="回" />
+        </div>
+      </div>
+  );
+}
+
+// BPM傾向比較(トッププレイの平均BPM)
+function BpmCompare({ playerResults }) {
+  const bpmData = buildAveragePlayerMetric(playerResults, (s) =>
+      typeof s.beatmap?.bpm === "number" ? s.beatmap.bpm : null
+  );
+
+  return <SimplePlayerBarChart data={bpmData} tooltipLabel="平均BPM" valueSuffix=" BPM" />;
+}
+
 function PlayerCompare() {
   const [usernames, setUsernames] = useState(["", "", ""]);
   const [mode, setMode] = useState("osu");
@@ -565,7 +745,12 @@ function PlayerCompare() {
             <>
               <div className="chart-card">
                 <h3>基本ステータス比較</h3>
-                <CompareStatsTable playerResults={results} />
+                <CompareStatsTable playerResults={results} rows={BASIC_STAT_ROWS} />
+              </div>
+
+              <div className="chart-card">
+                <h3>サブステータス比較</h3>
+                <CompareStatsTable playerResults={results} rows={SUB_STAT_ROWS} />
               </div>
 
               <div className="chart-card">
@@ -576,6 +761,21 @@ function PlayerCompare() {
               <div className="chart-card">
                 <h3>難易度分布の比較</h3>
                 <DifficultyDistributionChart playerResults={results} />
+              </div>
+
+              <div className="chart-card">
+                <h3>活動時間帯の比較</h3>
+                <ActivityTimeChart playerResults={results} />
+              </div>
+
+              <div className="chart-card">
+                <h3>ミス数・コンボ比較</h3>
+                <ComboMissCompare playerResults={results} />
+              </div>
+
+              <div className="chart-card">
+                <h3>BPM傾向比較</h3>
+                <BpmCompare playerResults={results} />
               </div>
 
               <div className="chart-card">
