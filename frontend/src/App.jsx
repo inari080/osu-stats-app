@@ -16,6 +16,24 @@ import "./App.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
+// osu!公式サイトへのリンクを生成するヘルパー
+function osuProfileUrl(userId, mode) {
+  if (!userId) return null;
+  return `https://osu.ppy.sh/users/${userId}/${mode || "osu"}`;
+}
+
+function osuBeatmapsetUrl(beatmapsetId) {
+  if (!beatmapsetId) return null;
+  return `https://osu.ppy.sh/beatmapsets/${beatmapsetId}`;
+}
+
+function osuBeatmapUrl(beatmapsetId, beatmapId, mode) {
+  if (!beatmapsetId) return null;
+  return `https://osu.ppy.sh/beatmapsets/${beatmapsetId}${
+      beatmapId ? `#${mode || "osu"}/${beatmapId}` : ""
+  }`;
+}
+
 // osu!のランク(XH, X, SH, S, A, B, C, D)に応じてCSSクラス名を返す
 function getRankClass(rank) {
   if (!rank) return "";
@@ -223,20 +241,27 @@ const SUB_STAT_ROWS = [
   },
 ];
 
-function CompareStatsTable({ playerResults, rows = BASIC_STAT_ROWS }) {
+function CompareStatsTable({ playerResults, rows = BASIC_STAT_ROWS, mode = "osu" }) {
   return (
       <div className="compare-stats-table-wrapper">
         <table className="compare-stats-table">
           <thead>
           <tr>
             <th></th>
-            {playerResults.map(({ username }, idx) => (
+            {playerResults.map(({ username, user }, idx) => (
                 <th key={username}>
                   <span
                       className="compare-color-dot"
                       style={{ background: COMPARE_COLORS[idx % COMPARE_COLORS.length] }}
                   />
-                  {username}
+                  <a
+                      href={osuProfileUrl(user?.id, mode)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="external-link"
+                  >
+                    {username}
+                  </a>
                 </th>
             ))}
           </tr>
@@ -257,17 +282,24 @@ function CompareStatsTable({ playerResults, rows = BASIC_STAT_ROWS }) {
 }
 
 // トッププレイの比較(各プレイヤーのTop5を並べて表示)
-function CompareTopPlays({ playerResults }) {
+function CompareTopPlays({ playerResults, mode = "osu" }) {
   return (
       <div className="compare-topplays-grid">
-        {playerResults.map(({ username, scores, error }, idx) => (
+        {playerResults.map(({ username, user, scores, error }, idx) => (
             <div key={username} className="compare-topplays-column">
               <h4>
                 <span
                     className="compare-color-dot"
                     style={{ background: COMPARE_COLORS[idx % COMPARE_COLORS.length] }}
                 />
-                {username}
+                <a
+                    href={osuProfileUrl(user?.id, mode)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="external-link"
+                >
+                  {username}
+                </a>
               </h4>
               {error ? (
                   <p className="chart-empty">取得できませんでした</p>
@@ -275,9 +307,16 @@ function CompareTopPlays({ playerResults }) {
                   (scores ?? []).slice(0, 5).map((score) => (
                       <div key={score.id} className="score-row">
                   <span className="beatmap-title">
-                    {score.beatmapset?.title ?? "Unknown"}
-                    {" - "}
-                    {score.beatmap?.version ?? ""}
+                    <a
+                        href={osuBeatmapUrl(score.beatmapset?.id, score.beatmap?.id, mode)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="external-link"
+                    >
+                      {score.beatmapset?.title ?? "Unknown"}
+                      {" - "}
+                      {score.beatmap?.version ?? ""}
+                    </a>
                   </span>
                         <span className="score-pp">{score.pp?.toFixed(2) ?? 0}pp</span>
                         <span className={`score-rank ${getRankClass(score.rank)}`}>
@@ -372,6 +411,8 @@ function buildCommonBeatmaps(playerResults) {
 
       if (!byBeatmap.has(beatmapId)) {
         byBeatmap.set(beatmapId, {
+          beatmapId,
+          beatmapsetId: s.beatmapset?.id,
           title: s.beatmapset?.title ?? "Unknown",
           version: s.beatmap?.version ?? "",
           star: s.beatmap?.difficulty_rating,
@@ -397,7 +438,7 @@ function buildCommonBeatmaps(playerResults) {
       });
 }
 
-function CommonBeatmapsTable({ playerResults }) {
+function CommonBeatmapsTable({ playerResults, mode = "osu" }) {
   const validResults = playerResults.filter((r) => !r.error);
   const commonBeatmaps = buildCommonBeatmaps(playerResults);
 
@@ -434,7 +475,14 @@ function CommonBeatmapsTable({ playerResults }) {
             return (
                 <tr key={rowIdx}>
                   <td className="compare-beatmap-col compare-stat-label">
-                    {beatmap.title} - {beatmap.version}
+                    <a
+                        href={osuBeatmapUrl(beatmap.beatmapsetId, beatmap.beatmapId, mode)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="external-link"
+                    >
+                      {beatmap.title} - {beatmap.version}
+                    </a>
                     {typeof beatmap.star === "number" && (
                         <span className="compare-beatmap-star">
                     {beatmap.star.toFixed(1)}★
@@ -745,12 +793,12 @@ function PlayerCompare() {
             <>
               <div className="chart-card">
                 <h3>基本ステータス比較</h3>
-                <CompareStatsTable playerResults={results} rows={BASIC_STAT_ROWS} />
+                <CompareStatsTable playerResults={results} rows={BASIC_STAT_ROWS} mode={mode} />
               </div>
 
               <div className="chart-card">
                 <h3>サブステータス比較</h3>
-                <CompareStatsTable playerResults={results} rows={SUB_STAT_ROWS} />
+                <CompareStatsTable playerResults={results} rows={SUB_STAT_ROWS} mode={mode} />
               </div>
 
               <div className="chart-card">
@@ -780,12 +828,12 @@ function PlayerCompare() {
 
               <div className="chart-card">
                 <h3>ビートマップ比較(共通のトッププレイ譜面)</h3>
-                <CommonBeatmapsTable playerResults={results} />
+                <CommonBeatmapsTable playerResults={results} mode={mode} />
               </div>
 
               <div className="chart-card">
                 <h3>トッププレイの比較</h3>
-                <CompareTopPlays playerResults={results} />
+                <CompareTopPlays playerResults={results} mode={mode} />
               </div>
             </>
         )}
@@ -867,9 +915,24 @@ function PlayerSearch() {
 
         {user && (
             <div className="user-card">
-              <img src={user.avatar_url} alt={user.username} className="avatar" />
+              <a
+                  href={osuProfileUrl(user.id, mode)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+              >
+                <img src={user.avatar_url} alt={user.username} className="avatar" />
+              </a>
               <div className="user-info">
-                <h2>{user.username}</h2>
+                <h2>
+                  <a
+                      href={osuProfileUrl(user.id, mode)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="external-link"
+                  >
+                    {user.username}
+                  </a>
+                </h2>
                 <p>Rank: #{user.statistics?.global_rank ?? "N/A"}</p>
                 <p>PP: {user.statistics?.pp?.toFixed(2) ?? "N/A"}</p>
                 <p>Accuracy: {user.statistics?.hit_accuracy?.toFixed(2) ?? "N/A"}%</p>
@@ -881,7 +944,7 @@ function PlayerSearch() {
         {user && (
             <div className="chart-card">
               <h3>サブステータス</h3>
-              <CompareStatsTable playerResults={singlePlayerResult} rows={SUB_STAT_ROWS} />
+              <CompareStatsTable playerResults={singlePlayerResult} rows={SUB_STAT_ROWS} mode={mode} />
             </div>
         )}
 
@@ -919,9 +982,16 @@ function PlayerSearch() {
               {scores.slice(0, 5).map((score) => (
                   <div key={score.id} className="score-row">
               <span className="beatmap-title">
-                {score.beatmapset?.title ?? "Unknown"}
-                {" - "}
-                {score.beatmap?.version ?? ""}
+                <a
+                    href={osuBeatmapUrl(score.beatmapset?.id, score.beatmap?.id, mode)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="external-link"
+                >
+                  {score.beatmapset?.title ?? "Unknown"}
+                  {" - "}
+                  {score.beatmap?.version ?? ""}
+                </a>
               </span>
                     <span className="score-pp">{score.pp?.toFixed(2) ?? 0}pp</span>
                     <span className={`score-rank ${getRankClass(score.rank)}`}>
@@ -1144,7 +1214,16 @@ function BeatmapSearch() {
                         className="beatmapset-cover"
                     />
                     <div className="beatmapset-info">
-                      <h3>{set.title}</h3>
+                      <h3>
+                        <a
+                            href={osuBeatmapsetUrl(set.id)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="external-link"
+                        >
+                          {set.title}
+                        </a>
+                      </h3>
                       <p className="beatmapset-artist">{set.artist}</p>
                       <p className="beatmapset-mapper">mapped by {set.creator}</p>
                       <div className="beatmapset-diffs">
