@@ -2,6 +2,8 @@ import { useState } from "react";
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -258,6 +260,179 @@ function CompareTopPlays({ playerResults }) {
   );
 }
 
+// 難易度(スターレート)帯ごとにトッププレイ数を集計する
+const STAR_BUCKETS = [
+  { key: "0-2", label: "〜2★", min: 0, max: 2 },
+  { key: "2-3", label: "2〜3★", min: 2, max: 3 },
+  { key: "3-4", label: "3〜4★", min: 3, max: 4 },
+  { key: "4-5", label: "4〜5★", min: 4, max: 5 },
+  { key: "5-6", label: "5〜6★", min: 5, max: 6 },
+  { key: "6-7", label: "6〜7★", min: 6, max: 7 },
+  { key: "7+", label: "7★〜", min: 7, max: Infinity },
+];
+
+function buildDifficultyDistribution(playerResults) {
+  return STAR_BUCKETS.map((bucket) => {
+    const row = { bucket: bucket.label };
+    playerResults.forEach(({ username, scores, error }) => {
+      if (error) return;
+      row[username] = (scores ?? []).filter((s) => {
+        const star = s.beatmap?.difficulty_rating;
+        return typeof star === "number" && star >= bucket.min && star < bucket.max;
+      }).length;
+    });
+    return row;
+  });
+}
+
+function DifficultyDistributionChart({ playerResults }) {
+  const validResults = playerResults.filter((r) => !r.error && r.scores?.length);
+  const data = buildDifficultyDistribution(validResults);
+  const hasAnyData = data.some((row) =>
+      validResults.some(({ username }) => (row[username] ?? 0) > 0)
+  );
+
+  if (!hasAnyData) {
+    return (
+        <p className="chart-empty">
+          グラフを表示するにはトッププレイのデータが足りません。
+        </p>
+    );
+  }
+
+  return (
+      <div className="chart-wrapper">
+        <ResponsiveContainer width="100%" height={280}>
+          <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis dataKey="bucket" tick={{ fontSize: 11, fill: "#777" }} />
+            <YAxis
+                tick={{ fontSize: 11, fill: "#777" }}
+                width={32}
+                allowDecimals={false}
+                label={{ value: "件数", angle: -90, position: "insideLeft", fontSize: 11 }}
+            />
+            <Tooltip contentStyle={{ fontSize: "0.85rem" }} />
+            <Legend wrapperStyle={{ fontSize: "0.85rem" }} />
+            {validResults.map(({ username }, idx) => (
+                <Bar
+                    key={username}
+                    dataKey={username}
+                    fill={COMPARE_COLORS[idx % COMPARE_COLORS.length]}
+                    radius={[4, 4, 0, 0]}
+                />
+            ))}
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+  );
+}
+
+// 2人以上のプレイヤーが両方トッププレイに持っている譜面(共通ビートマップ)を集計する
+function buildCommonBeatmaps(playerResults) {
+  const validResults = playerResults.filter((r) => !r.error);
+  const byBeatmap = new Map();
+
+  validResults.forEach(({ username, scores }) => {
+    (scores ?? []).forEach((s) => {
+      const beatmapId = s.beatmap?.id;
+      if (!beatmapId) return;
+
+      if (!byBeatmap.has(beatmapId)) {
+        byBeatmap.set(beatmapId, {
+          title: s.beatmapset?.title ?? "Unknown",
+          version: s.beatmap?.version ?? "",
+          star: s.beatmap?.difficulty_rating,
+          entries: {},
+        });
+      }
+      byBeatmap.get(beatmapId).entries[username] = {
+        pp: s.pp,
+        accuracy: s.accuracy,
+        rank: s.rank,
+      };
+    });
+  });
+
+  return Array.from(byBeatmap.values())
+      .filter((entry) => Object.keys(entry.entries).length >= 2)
+      .sort((a, b) => {
+        const countDiff = Object.keys(b.entries).length - Object.keys(a.entries).length;
+        if (countDiff !== 0) return countDiff;
+        const maxA = Math.max(...Object.values(a.entries).map((e) => e.pp ?? 0));
+        const maxB = Math.max(...Object.values(b.entries).map((e) => e.pp ?? 0));
+        return maxB - maxA;
+      });
+}
+
+function CommonBeatmapsTable({ playerResults }) {
+  const validResults = playerResults.filter((r) => !r.error);
+  const commonBeatmaps = buildCommonBeatmaps(playerResults);
+
+  if (commonBeatmaps.length === 0) {
+    return (
+        <p className="chart-empty">
+          共通のトッププレイ譜面が見つかりませんでした。
+        </p>
+    );
+  }
+
+  return (
+      <div className="compare-stats-table-wrapper">
+        <table className="compare-stats-table compare-beatmaps-table">
+          <thead>
+          <tr>
+            <th className="compare-beatmap-col">譜面</th>
+            {validResults.map(({ username }, idx) => (
+                <th key={username}>
+                  <span
+                      className="compare-color-dot"
+                      style={{ background: COMPARE_COLORS[idx % COMPARE_COLORS.length] }}
+                  />
+                  {username}
+                </th>
+            ))}
+          </tr>
+          </thead>
+          <tbody>
+          {commonBeatmaps.map((beatmap, rowIdx) => {
+            const bestPp = Math.max(
+                ...Object.values(beatmap.entries).map((e) => e.pp ?? 0)
+            );
+            return (
+                <tr key={rowIdx}>
+                  <td className="compare-beatmap-col compare-stat-label">
+                    {beatmap.title} - {beatmap.version}
+                    {typeof beatmap.star === "number" && (
+                        <span className="compare-beatmap-star">
+                    {beatmap.star.toFixed(1)}★
+                  </span>
+                    )}
+                  </td>
+                  {validResults.map(({ username }) => {
+                    const entry = beatmap.entries[username];
+                    if (!entry) return <td key={username}>-</td>;
+                    const isBest = entry.pp === bestPp;
+                    return (
+                        <td key={username} className={isBest ? "compare-best-cell" : ""}>
+                          {entry.pp?.toFixed(2) ?? "-"}pp
+                          {typeof entry.accuracy === "number" && (
+                              <span className="compare-beatmap-acc">
+                        {(entry.accuracy * 100).toFixed(2)}%
+                      </span>
+                          )}
+                        </td>
+                    );
+                  })}
+                </tr>
+            );
+          })}
+          </tbody>
+        </table>
+      </div>
+  );
+}
+
 function PlayerCompare() {
   const [usernames, setUsernames] = useState(["", "", ""]);
   const [mode, setMode] = useState("osu");
@@ -396,6 +571,16 @@ function PlayerCompare() {
               <div className="chart-card">
                 <h3>pp推移の比較</h3>
                 <CombinedPpTrendChart playerResults={results} />
+              </div>
+
+              <div className="chart-card">
+                <h3>難易度分布の比較</h3>
+                <DifficultyDistributionChart playerResults={results} />
+              </div>
+
+              <div className="chart-card">
+                <h3>ビートマップ比較(共通のトッププレイ譜面)</h3>
+                <CommonBeatmapsTable playerResults={results} />
               </div>
 
               <div className="chart-card">

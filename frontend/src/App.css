@@ -484,3 +484,27 @@
 .compare-topplays-column .score-row {
   font-size: 0.85rem;
 }
+
+.compare-beatmaps-table .compare-beatmap-col {
+  text-align: left;
+  min-width: 220px;
+}
+
+.compare-beatmap-star {
+  margin-left: 8px;
+  color: #999;
+  font-size: 0.8rem;
+}
+
+.compare-beatmap-acc {
+  display: block;
+  color: #999;
+  font-size: 0.75rem;
+}
+
+.compare-best-cell {
+  background: #fff0f6;
+  color: #ff4d9c;
+  font-weight: 700;
+  border-radius: 6px;
+}
