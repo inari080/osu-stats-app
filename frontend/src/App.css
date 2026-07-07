@@ -107,18 +107,29 @@
   background: white;
 }
 
+/* App.css */
 .star-range {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.star-range input {
-  width: 70px;
-  padding: 8px 10px;
+  flex-wrap: wrap;
+  background: #fafafa;
   border: 1px solid #ddd;
   border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.star-range input[type="number"] {
+  width: 60px;
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
   font-size: 0.9rem;
+}
+
+.star-range input[type="range"].star-slider {
+  width: 90px;
+  accent-color: #ff66ab;
 }
 
 .star-range span {

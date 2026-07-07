@@ -193,9 +193,9 @@ function BeatmapSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // App.jsx: handleSearch
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!query.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -277,20 +277,41 @@ function BeatmapSearch() {
             ))}
           </select>
 
+          // App.jsx: 星レート部分
           <div className="star-range">
             <input
                 type="number"
                 step="0.1"
                 min="0"
+                max="15"
                 placeholder="★下限"
                 value={minStar}
                 onChange={(e) => setMinStar(e.target.value)}
             />
+            <input
+                type="range"
+                min="0"
+                max="15"
+                step="0.1"
+                value={minStar === "" ? 0 : minStar}
+                onChange={(e) => setMinStar(e.target.value)}
+                className="star-slider"
+            />
             <span>〜</span>
+            <input
+                type="range"
+                min="0"
+                max="15"
+                step="0.1"
+                value={maxStar === "" ? 15 : maxStar}
+                onChange={(e) => setMaxStar(e.target.value)}
+                className="star-slider"
+            />
             <input
                 type="number"
                 step="0.1"
                 min="0"
+                max="15"
                 placeholder="★上限"
                 value={maxStar}
                 onChange={(e) => setMaxStar(e.target.value)}
