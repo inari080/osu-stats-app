@@ -120,9 +120,75 @@ function PlayerSearch() {
   );
 }
 
+const STATUS_OPTIONS = [
+  { value: "ranked", label: "Ranked" },
+  { value: "qualified", label: "Qualified" },
+  { value: "loved", label: "Loved" },
+  { value: "favourites", label: "お気に入り" },
+  { value: "pending", label: "Pending" },
+  { value: "wip", label: "WIP" },
+  { value: "graveyard", label: "Graveyard" },
+  { value: "any", label: "すべて" },
+];
+
+const SORT_OPTIONS = [
+  { value: "", label: "関連度(デフォルト)" },
+  { value: "ranked_desc", label: "Ranked日: 新しい順" },
+  { value: "ranked_asc", label: "Ranked日: 古い順" },
+  { value: "plays_desc", label: "プレイ数: 多い順" },
+  { value: "plays_asc", label: "プレイ数: 少ない順" },
+  { value: "difficulty_desc", label: "難易度: 高い順" },
+  { value: "difficulty_asc", label: "難易度: 低い順" },
+  { value: "rating_desc", label: "評価: 高い順" },
+  { value: "favourites_desc", label: "お気に入り: 多い順" },
+  { value: "title_asc", label: "タイトル: A-Z" },
+  { value: "artist_asc", label: "アーティスト: A-Z" },
+];
+
+const GENRE_OPTIONS = [
+  { value: "", label: "ジャンル: 指定なし" },
+  { value: "1", label: "Unspecified" },
+  { value: "2", label: "Video Game" },
+  { value: "3", label: "Anime" },
+  { value: "4", label: "Rock" },
+  { value: "5", label: "Pop" },
+  { value: "6", label: "Other" },
+  { value: "7", label: "Novelty" },
+  { value: "9", label: "Hip Hop" },
+  { value: "10", label: "Electronic" },
+  { value: "11", label: "Metal" },
+  { value: "12", label: "Classical" },
+  { value: "13", label: "Folk" },
+  { value: "14", label: "Jazz" },
+];
+
+const LANGUAGE_OPTIONS = [
+  { value: "", label: "言語: 指定なし" },
+  { value: "1", label: "Unspecified" },
+  { value: "2", label: "English" },
+  { value: "3", label: "Japanese" },
+  { value: "4", label: "Chinese" },
+  { value: "5", label: "Instrumental" },
+  { value: "6", label: "Korean" },
+  { value: "7", label: "French" },
+  { value: "8", label: "German" },
+  { value: "9", label: "Swedish" },
+  { value: "10", label: "Spanish" },
+  { value: "11", label: "Italian" },
+  { value: "12", label: "Russian" },
+  { value: "13", label: "Polish" },
+  { value: "14", label: "Other" },
+];
+
 function BeatmapSearch() {
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("");
+  const [status, setStatus] = useState("ranked");
+  const [sort, setSort] = useState("");
+  const [genre, setGenre] = useState("");
+  const [language, setLanguage] = useState("");
+  const [minStar, setMinStar] = useState("");
+  const [maxStar, setMaxStar] = useState("");
   const [beatmapsets, setBeatmapsets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -136,8 +202,13 @@ function BeatmapSearch() {
     setBeatmapsets([]);
 
     try {
-      const params = new URLSearchParams({ q: query });
+      const params = new URLSearchParams({ q: query, status });
       if (mode) params.set("mode", mode);
+      if (sort) params.set("sort", sort);
+      if (genre) params.set("genre", genre);
+      if (language) params.set("language", language);
+      if (minStar !== "") params.set("min_star", minStar);
+      if (maxStar !== "") params.set("max_star", maxStar);
 
       const res = await fetch(`${API_BASE}/api/beatmapsets/search?${params}`);
       if (!res.ok) {
@@ -172,6 +243,60 @@ function BeatmapSearch() {
             {loading ? "検索中..." : "検索"}
           </button>
         </form>
+
+        <div className="filter-bar">
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+            ))}
+          </select>
+
+          <select value={sort} onChange={(e) => setSort(e.target.value)}>
+            {SORT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+            ))}
+          </select>
+
+          <select value={genre} onChange={(e) => setGenre(e.target.value)}>
+            {GENRE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+            ))}
+          </select>
+
+          <select value={language} onChange={(e) => setLanguage(e.target.value)}>
+            {LANGUAGE_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+            ))}
+          </select>
+
+          <div className="star-range">
+            <input
+                type="number"
+                step="0.1"
+                min="0"
+                placeholder="★下限"
+                value={minStar}
+                onChange={(e) => setMinStar(e.target.value)}
+            />
+            <span>〜</span>
+            <input
+                type="number"
+                step="0.1"
+                min="0"
+                placeholder="★上限"
+                value={maxStar}
+                onChange={(e) => setMaxStar(e.target.value)}
+            />
+          </div>
+        </div>
 
         {error && <p className="error">{error}</p>}
 

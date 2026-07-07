@@ -121,24 +121,54 @@ async def get_user_best_scores(username: str, mode: str = "osu", limit: int = 10
 
 
 @app.get("/api/beatmapsets/search")
-async def search_beatmapsets(q: str, mode: str = "", status: str = "ranked"):
+async def search_beatmapsets(
+    q: str,
+    mode: str = "",
+    status: str = "ranked",
+    sort: str = "",
+    genre: str = "",
+    language: str = "",
+    min_star: float | None = None,
+    max_star: float | None = None,
+):
     """
     ビートマップセットを検索する。
     q: 検索キーワード(曲名、アーティスト名など)
     mode: osu, taiko, fruits, mania (空文字なら全モード)
-    status: ranked, qualified, loved, pending, graveyard, wip, all
+    status: any, ranked, qualified, loved, favourites, pending, wip, graveyard, mine
+    sort: title_desc/asc, artist_desc/asc, difficulty_desc/asc, ranked_desc/asc,
+          rating_desc/asc, plays_desc/asc, favourites_desc/asc (空文字ならデフォルト)
+    genre: ジャンルコード(数値文字列)
+    language: 言語コード(数値文字列)
+    min_star / max_star: 星レート(難易度)の範囲。osu! APIには専用パラメータが無いため、
+        `stars>=X` / `stars<=Y` というフィルター構文を検索キーワードに埋め込んで実現する。
     """
     token = await get_access_token()
 
-    params = {"query": q}
+    # 星レート範囲は検索キーワード自体にフィルター構文として埋め込む
+    # (osu!公式サイトの検索ボックスと同じ仕様)
+    query_parts = [q]
+    if min_star is not None:
+        query_parts.append(f"stars>={min_star}")
+    if max_star is not None:
+        query_parts.append(f"stars<={max_star}")
+    combined_query = " ".join(part for part in query_parts if part)
+
+    params = {"q": combined_query}
     if status and status != "all":
         params["s"] = status
     if mode:
         mode_map = {"osu": "0", "taiko": "1", "fruits": "2", "mania": "3"}
         if mode in mode_map:
             params["m"] = mode_map[mode]
+    if sort:
+        params["sort"] = sort
+    if genre:
+        params["g"] = genre
+    if language:
+        params["l"] = language
 
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(follow_redirects=True) as client:
         resp = await client.get(
             f"{API_BASE}/beatmapsets/search",
             headers={"Authorization": f"Bearer {token}"},
