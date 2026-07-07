@@ -3,6 +3,20 @@ import "./App.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
+// osu!のランク(XH, X, SH, S, A, B, C, D)に応じてCSSクラス名を返す
+function getRankClass(rank) {
+  if (!rank) return "";
+  const normalized = rank.toUpperCase();
+  if (normalized === "XH" || normalized === "SSH") return "rank-ssh";
+  if (normalized === "X" || normalized === "SS") return "rank-ss";
+  if (normalized === "SH") return "rank-sh";
+  if (normalized === "S") return "rank-s";
+  if (normalized === "A") return "rank-a";
+  if (normalized === "B") return "rank-b";
+  if (normalized === "C") return "rank-c";
+  return "rank-d";
+}
+
 function App() {
   const [username, setUsername] = useState("");
   const [mode, setMode] = useState("osu");
@@ -100,7 +114,9 @@ function App() {
                 {score.beatmap?.version ?? ""}
               </span>
                     <span className="score-pp">{score.pp?.toFixed(2) ?? 0}pp</span>
-                    <span className="score-rank">{score.rank}</span>
+                    <span className={`score-rank ${getRankClass(score.rank)}`}>
+                {score.rank}
+              </span>
                   </div>
               ))}
             </div>

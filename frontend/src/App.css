@@ -128,3 +128,59 @@
   font-weight: 600;
   margin: 0 12px;
 }
+
+.score-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: white;
+}
+
+/* SSH / XH: 虹色っぽい特別枠なので明るいシルバー系 */
+.rank-ssh {
+  background: linear-gradient(135deg, #b0e0e6, #ffffff);
+  color: #444;
+}
+
+/* SS / X: ゴールド */
+.rank-ss {
+  background: linear-gradient(135deg, #ffd700, #ffb300);
+  color: #4a3900;
+}
+
+/* SH: シルバー */
+.rank-sh {
+  background: linear-gradient(135deg, #d9d9f0, #ffffff);
+  color: #444;
+}
+
+/* S: ゴールド寄りの黄色 */
+.rank-s {
+  background: #ffcc22;
+  color: #4a3900;
+}
+
+/* A: 緑 */
+.rank-a {
+  background: #7cd657;
+}
+
+/* B: 青 */
+.rank-b {
+  background: #6bb3ff;
+}
+
+/* C: ピンク */
+.rank-c {
+  background: #ff8fc7;
+}
+
+/* D以下: グレー */
+.rank-d {
+  background: #999;
+}
