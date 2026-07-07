@@ -1,4 +1,13 @@
 import { useState } from "react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 import "./App.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
@@ -15,6 +24,70 @@ function getRankClass(rank) {
   if (normalized === "B") return "rank-b";
   if (normalized === "C") return "rank-c";
   return "rank-d";
+}
+
+// トッププレイの pp を達成日順に並べて折れ線グラフ用データに変換
+function buildPpTrendData(scores) {
+  return scores
+      .filter((s) => typeof s.pp === "number" && s.created_at)
+      .map((s) => ({
+        date: s.created_at,
+        pp: Math.round(s.pp * 100) / 100,
+        title: s.beatmapset?.title ?? "Unknown",
+        version: s.beatmap?.version ?? "",
+      }))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+function formatDate(dateStr) {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function PpTrendChart({ scores }) {
+  const data = buildPpTrendData(scores);
+
+  if (data.length < 2) {
+    return (
+        <p className="chart-empty">
+          グラフを表示するにはトッププレイのデータが足りません。
+        </p>
+    );
+  }
+
+  return (
+      <div className="chart-wrapper">
+        <ResponsiveContainer width="100%" height={260}>
+          <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis
+                dataKey="date"
+                tickFormatter={formatDate}
+                tick={{ fontSize: 11, fill: "#777" }}
+                minTickGap={30}
+            />
+            <YAxis
+                tick={{ fontSize: 11, fill: "#777" }}
+                width={40}
+                label={{ value: "pp", angle: -90, position: "insideLeft", fontSize: 11 }}
+            />
+            <Tooltip
+                formatter={(value) => [`${value}pp`, "pp"]}
+                labelFormatter={formatDate}
+                contentStyle={{ fontSize: "0.85rem" }}
+            />
+            <Line
+                type="monotone"
+                dataKey="pp"
+                stroke="#ff66ab"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+  );
 }
 
 function PlayerSearch() {
@@ -51,7 +124,7 @@ function PlayerSearch() {
       const scoresRes = await fetch(
           `${API_BASE}/api/user/${encodeURIComponent(
               username
-          )}/scores/best?mode=${mode}&limit=5`
+          )}/scores/best?mode=${mode}&limit=100`
       );
       if (scoresRes.ok) {
         setScores(await scoresRes.json());
@@ -99,9 +172,16 @@ function PlayerSearch() {
         )}
 
         {scores.length > 0 && (
+            <div className="chart-card">
+              <h3>pp推移(トッププレイ)</h3>
+              <PpTrendChart scores={scores} />
+            </div>
+        )}
+
+        {scores.length > 0 && (
             <div className="scores-list">
               <h3>Top Plays</h3>
-              {scores.map((score) => (
+              {scores.slice(0, 5).map((score) => (
                   <div key={score.id} className="score-row">
               <span className="beatmap-title">
                 {score.beatmapset?.title ?? "Unknown"}
@@ -193,7 +273,6 @@ function BeatmapSearch() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // App.jsx: handleSearch
   const handleSearch = async (e) => {
     e.preventDefault();
 
@@ -277,7 +356,6 @@ function BeatmapSearch() {
             ))}
           </select>
 
-          // App.jsx: 星レート部分
           <div className="star-range">
             <input
                 type="number"
