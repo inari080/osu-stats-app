@@ -25,7 +25,7 @@ app = FastAPI(title="osu! Stats App API")
 # フロントエンドをVercel等にデプロイしたら、そのURLをここに追加する
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    # "https://your-frontend.vercel.app",  # ← フロントエンドのURLが決まったらコメントを外して追加
+    "https://osu-stats-app.vercel.app",  # ← フロントエンドのURLが決まったらコメントを外して追加
 ]
 
 app.add_middleware(
