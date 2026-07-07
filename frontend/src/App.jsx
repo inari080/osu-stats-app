@@ -1,7 +1,7 @@
 import { useState } from "react";
 import "./App.css";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://osu-stats-app.onrender.com";
 
 function App() {
   const [username, setUsername] = useState("");
