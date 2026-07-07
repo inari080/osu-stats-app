@@ -334,3 +334,153 @@
   padding: 3px 8px;
   border-radius: 12px;
 }
+
+/* --- プレイヤー比較機能 --- */
+
+.compare-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.compare-player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.compare-player-row input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.compare-color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.compare-player-row .compare-color-dot {
+  margin-right: 0;
+}
+
+.compare-remove-btn {
+  border: none;
+  background: #f0f0f0;
+  color: #999;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.compare-remove-btn:hover {
+  background: #ffe0eb;
+  color: #d9364b;
+}
+
+.compare-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.compare-add-btn {
+  padding: 10px 16px;
+  border: 1px dashed #ff9ac4;
+  border-radius: 8px;
+  background: white;
+  color: #ff66ab;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.compare-add-btn:hover:not(:disabled) {
+  background: #fff0f6;
+}
+
+.compare-add-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.compare-form-actions select {
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.compare-form-actions button[type="submit"] {
+  margin-left: auto;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #ff66ab;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.compare-form-actions button[type="submit"]:hover:not(:disabled) {
+  background: #ff4d9c;
+}
+
+.compare-form-actions button[type="submit"]:disabled {
+  background: #ffb3d4;
+  cursor: not-allowed;
+}
+
+.compare-stats-table-wrapper {
+  overflow-x: auto;
+}
+
+.compare-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.compare-stats-table th,
+.compare-stats-table td {
+  padding: 8px 12px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+  white-space: nowrap;
+}
+
+.compare-stats-table th {
+  color: #555;
+}
+
+.compare-stats-table .compare-stat-label {
+  text-align: left;
+  color: #777;
+  font-weight: 600;
+}
+
+.compare-topplays-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.compare-topplays-column h4 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px 0;
+}
+
+.compare-topplays-column .score-row {
+  font-size: 0.85rem;
+}

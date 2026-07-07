@@ -6,6 +6,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import "./App.css";
@@ -87,6 +88,323 @@ function PpTrendChart({ scores }) {
           </LineChart>
         </ResponsiveContainer>
       </div>
+  );
+}
+
+// 比較機能で使う配色パレット(プレイヤーごとに1色ずつ割り当てる)
+const COMPARE_COLORS = [
+  "#ff66ab",
+  "#6bb3ff",
+  "#7cd657",
+  "#ffcc22",
+  "#b98aff",
+  "#ff8f40",
+  "#40c4c4",
+  "#e05285",
+];
+
+// 複数プレイヤーのトッププレイを日付順に結合し、
+// 各行に「その日付に達成したプレイヤーのppだけ」を入れたデータを作る。
+// (recharts の connectNulls で、データが無い箇所を飛ばして線をつなげる)
+function buildCombinedPpTrendData(playerResults) {
+  const rows = [];
+
+  playerResults.forEach(({ username, scores }) => {
+    (scores ?? [])
+        .filter((s) => typeof s.pp === "number" && s.created_at)
+        .forEach((s) => {
+          rows.push({
+            date: s.created_at,
+            [username]: Math.round(s.pp * 100) / 100,
+          });
+        });
+  });
+
+  return rows.sort((a, b) => new Date(a.date) - new Date(b.date));
+}
+
+function CombinedPpTrendChart({ playerResults }) {
+  const validResults = playerResults.filter((r) => !r.error && r.scores?.length);
+  const data = buildCombinedPpTrendData(validResults);
+
+  if (data.length < 2) {
+    return (
+        <p className="chart-empty">
+          グラフを表示するにはトッププレイのデータが足りません。
+        </p>
+    );
+  }
+
+  return (
+      <div className="chart-wrapper">
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+            <XAxis
+                dataKey="date"
+                tickFormatter={formatDate}
+                tick={{ fontSize: 11, fill: "#777" }}
+                minTickGap={30}
+            />
+            <YAxis
+                tick={{ fontSize: 11, fill: "#777" }}
+                width={40}
+                label={{ value: "pp", angle: -90, position: "insideLeft", fontSize: 11 }}
+            />
+            <Tooltip
+                formatter={(value) => [`${value}pp`, ""]}
+                labelFormatter={formatDate}
+                contentStyle={{ fontSize: "0.85rem" }}
+            />
+            <Legend wrapperStyle={{ fontSize: "0.85rem" }} />
+            {validResults.map(({ username }, idx) => (
+                <Line
+                    key={username}
+                    type="monotone"
+                    dataKey={username}
+                    stroke={COMPARE_COLORS[idx % COMPARE_COLORS.length]}
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5 }}
+                    connectNulls
+                />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+  );
+}
+
+// 基本ステータスの並列表示用テーブル
+const COMPARE_STAT_ROWS = [
+  { key: "global_rank", label: "Rank", format: (v) => (v ? `#${v}` : "N/A") },
+  { key: "pp", label: "PP", format: (v) => (v != null ? v.toFixed(2) : "N/A") },
+  {
+    key: "hit_accuracy",
+    label: "Accuracy",
+    format: (v) => (v != null ? `${v.toFixed(2)}%` : "N/A"),
+  },
+  { key: "play_count", label: "Play Count", format: (v) => v ?? "N/A" },
+];
+
+function CompareStatsTable({ playerResults }) {
+  return (
+      <div className="compare-stats-table-wrapper">
+        <table className="compare-stats-table">
+          <thead>
+          <tr>
+            <th></th>
+            {playerResults.map(({ username }, idx) => (
+                <th key={username}>
+                  <span
+                      className="compare-color-dot"
+                      style={{ background: COMPARE_COLORS[idx % COMPARE_COLORS.length] }}
+                  />
+                  {username}
+                </th>
+            ))}
+          </tr>
+          </thead>
+          <tbody>
+          {COMPARE_STAT_ROWS.map((row) => (
+              <tr key={row.key}>
+                <td className="compare-stat-label">{row.label}</td>
+                {playerResults.map(({ username, user, error }) => (
+                    <td key={username}>
+                      {error ? "-" : row.format(user?.statistics?.[row.key])}
+                    </td>
+                ))}
+              </tr>
+          ))}
+          </tbody>
+        </table>
+      </div>
+  );
+}
+
+// トッププレイの比較(各プレイヤーのTop5を並べて表示)
+function CompareTopPlays({ playerResults }) {
+  return (
+      <div className="compare-topplays-grid">
+        {playerResults.map(({ username, scores, error }, idx) => (
+            <div key={username} className="compare-topplays-column">
+              <h4>
+                <span
+                    className="compare-color-dot"
+                    style={{ background: COMPARE_COLORS[idx % COMPARE_COLORS.length] }}
+                />
+                {username}
+              </h4>
+              {error ? (
+                  <p className="chart-empty">取得できませんでした</p>
+              ) : (
+                  (scores ?? []).slice(0, 5).map((score) => (
+                      <div key={score.id} className="score-row">
+                  <span className="beatmap-title">
+                    {score.beatmapset?.title ?? "Unknown"}
+                    {" - "}
+                    {score.beatmap?.version ?? ""}
+                  </span>
+                        <span className="score-pp">{score.pp?.toFixed(2) ?? 0}pp</span>
+                        <span className={`score-rank ${getRankClass(score.rank)}`}>
+                    {score.rank}
+                  </span>
+                      </div>
+                  ))
+              )}
+            </div>
+        ))}
+      </div>
+  );
+}
+
+function PlayerCompare() {
+  const [usernames, setUsernames] = useState(["", "", ""]);
+  const [mode, setMode] = useState("osu");
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const updateUsername = (idx, value) => {
+    setUsernames((prev) => prev.map((u, i) => (i === idx ? value : u)));
+  };
+
+  const addPlayer = () => {
+    if (usernames.length >= 8) return;
+    setUsernames((prev) => [...prev, ""]);
+  };
+
+  const removePlayer = (idx) => {
+    if (usernames.length <= 2) return;
+    setUsernames((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleCompare = async (e) => {
+    e.preventDefault();
+    const targets = usernames.map((u) => u.trim()).filter(Boolean);
+    if (targets.length < 2) {
+      setError("2人以上のユーザー名を入力してください");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setResults([]);
+
+    const fetched = await Promise.all(
+        targets.map(async (username) => {
+          try {
+            const userRes = await fetch(
+                `${API_BASE}/api/user/${encodeURIComponent(username)}?mode=${mode}`
+            );
+            if (!userRes.ok) {
+              throw new Error(
+                  userRes.status === 404
+                      ? "ユーザーが見つかりません"
+                      : "取得に失敗しました"
+              );
+            }
+            const user = await userRes.json();
+
+            const scoresRes = await fetch(
+                `${API_BASE}/api/user/${encodeURIComponent(
+                    username
+                )}/scores/best?mode=${mode}&limit=100`
+            );
+            const scores = scoresRes.ok ? await scoresRes.json() : [];
+
+            return { username, user, scores };
+          } catch (err) {
+            return { username, user: null, scores: [], error: err.message };
+          }
+        })
+    );
+
+    setResults(fetched);
+    setLoading(false);
+  };
+
+  return (
+      <>
+        <form className="compare-form" onSubmit={handleCompare}>
+          {usernames.map((username, idx) => (
+              <div key={idx} className="compare-player-row">
+                <span
+                    className="compare-color-dot"
+                    style={{ background: COMPARE_COLORS[idx % COMPARE_COLORS.length] }}
+                />
+                <input
+                    type="text"
+                    placeholder={`プレイヤー${idx + 1}のユーザー名`}
+                    value={username}
+                    onChange={(e) => updateUsername(idx, e.target.value)}
+                />
+                {usernames.length > 2 && (
+                    <button
+                        type="button"
+                        className="compare-remove-btn"
+                        onClick={() => removePlayer(idx)}
+                        aria-label="削除"
+                    >
+                      ×
+                    </button>
+                )}
+              </div>
+          ))}
+
+          <div className="compare-form-actions">
+            <button
+                type="button"
+                className="compare-add-btn"
+                onClick={addPlayer}
+                disabled={usernames.length >= 8}
+            >
+              + プレイヤーを追加
+            </button>
+
+            <select value={mode} onChange={(e) => setMode(e.target.value)}>
+              <option value="osu">osu!</option>
+              <option value="taiko">Taiko</option>
+              <option value="fruits">Catch</option>
+              <option value="mania">Mania</option>
+            </select>
+
+            <button type="submit" disabled={loading}>
+              {loading ? "比較中..." : "比較する"}
+            </button>
+          </div>
+        </form>
+
+        {error && <p className="error">{error}</p>}
+
+        {results.some((r) => r.error) && (
+            <p className="error">
+              {results
+                  .filter((r) => r.error)
+                  .map((r) => `${r.username}: ${r.error}`)
+                  .join(" / ")}
+            </p>
+        )}
+
+        {results.length > 0 && (
+            <>
+              <div className="chart-card">
+                <h3>基本ステータス比較</h3>
+                <CompareStatsTable playerResults={results} />
+              </div>
+
+              <div className="chart-card">
+                <h3>pp推移の比較</h3>
+                <CombinedPpTrendChart playerResults={results} />
+              </div>
+
+              <div className="chart-card">
+                <h3>トッププレイの比較</h3>
+                <CompareTopPlays playerResults={results} />
+              </div>
+            </>
+        )}
+      </>
   );
 }
 
@@ -451,9 +769,17 @@ function App() {
           >
             ビートマップ検索
           </button>
+          <button
+              className={`tab-button ${tab === "compare" ? "active" : ""}`}
+              onClick={() => setTab("compare")}
+          >
+            プレイヤー比較
+          </button>
         </div>
 
-        {tab === "player" ? <PlayerSearch /> : <BeatmapSearch />}
+        {tab === "player" && <PlayerSearch />}
+        {tab === "beatmap" && <BeatmapSearch />}
+        {tab === "compare" && <PlayerCompare />}
       </div>
   );
 }
