@@ -17,7 +17,7 @@ function getRankClass(rank) {
   return "rank-d";
 }
 
-function App() {
+function PlayerSearch() {
   const [username, setUsername] = useState("");
   const [mode, setMode] = useState("osu");
   const [user, setUser] = useState(null);
@@ -64,12 +64,7 @@ function App() {
   };
 
   return (
-      <div className="app">
-        <header className="header">
-          <h1>osu! stats</h1>
-          <p className="subtitle">プレイヤー統計を検索</p>
-        </header>
-
+      <>
         <form className="search-form" onSubmit={handleSearch}>
           <input
               type="text"
@@ -121,6 +116,120 @@ function App() {
               ))}
             </div>
         )}
+      </>
+  );
+}
+
+function BeatmapSearch() {
+  const [query, setQuery] = useState("");
+  const [mode, setMode] = useState("");
+  const [beatmapsets, setBeatmapsets] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setLoading(true);
+    setError(null);
+    setBeatmapsets([]);
+
+    try {
+      const params = new URLSearchParams({ q: query });
+      if (mode) params.set("mode", mode);
+
+      const res = await fetch(`${API_BASE}/api/beatmapsets/search?${params}`);
+      if (!res.ok) {
+        throw new Error("検索に失敗しました");
+      }
+      const data = await res.json();
+      setBeatmapsets(data.beatmapsets ?? []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+      <>
+        <form className="search-form" onSubmit={handleSearch}>
+          <input
+              type="text"
+              placeholder="曲名・アーティスト名で検索"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+          />
+          <select value={mode} onChange={(e) => setMode(e.target.value)}>
+            <option value="">全モード</option>
+            <option value="osu">osu!</option>
+            <option value="taiko">Taiko</option>
+            <option value="fruits">Catch</option>
+            <option value="mania">Mania</option>
+          </select>
+          <button type="submit" disabled={loading}>
+            {loading ? "検索中..." : "検索"}
+          </button>
+        </form>
+
+        {error && <p className="error">{error}</p>}
+
+        {beatmapsets.length > 0 && (
+            <div className="beatmapset-list">
+              {beatmapsets.map((set) => (
+                  <div key={set.id} className="beatmapset-card">
+                    <img
+                        src={set.covers?.card ?? set.covers?.list}
+                        alt={set.title}
+                        className="beatmapset-cover"
+                    />
+                    <div className="beatmapset-info">
+                      <h3>{set.title}</h3>
+                      <p className="beatmapset-artist">{set.artist}</p>
+                      <p className="beatmapset-mapper">mapped by {set.creator}</p>
+                      <div className="beatmapset-diffs">
+                        {set.beatmaps?.slice(0, 6).map((b) => (
+                            <span key={b.id} className="diff-badge">
+                      {b.version} ({b.difficulty_rating?.toFixed(1)}★)
+                    </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+              ))}
+            </div>
+        )}
+      </>
+  );
+}
+
+function App() {
+  const [tab, setTab] = useState("player");
+
+  return (
+      <div className="app">
+        <header className="header">
+          <h1>osu! stats</h1>
+          <p className="subtitle">プレイヤー統計・ビートマップを検索</p>
+        </header>
+
+        <div className="tabs">
+          <button
+              className={`tab-button ${tab === "player" ? "active" : ""}`}
+              onClick={() => setTab("player")}
+          >
+            プレイヤー検索
+          </button>
+          <button
+              className={`tab-button ${tab === "beatmap" ? "active" : ""}`}
+              onClick={() => setTab("beatmap")}
+          >
+            ビートマップ検索
+          </button>
+        </div>
+
+        {tab === "player" ? <PlayerSearch /> : <BeatmapSearch />}
       </div>
   );
 }

@@ -22,6 +22,35 @@
   margin-top: 4px;
 }
 
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  justify-content: center;
+}
+
+.tab-button {
+  padding: 8px 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #777;
+  transition: all 0.15s ease;
+}
+
+.tab-button:hover {
+  border-color: #ff66ab;
+  color: #ff66ab;
+}
+
+.tab-button.active {
+  background: #ff66ab;
+  border-color: #ff66ab;
+  color: white;
+}
+
 .search-form {
   display: flex;
   gap: 8px;
@@ -183,4 +212,61 @@
 /* D以下: グレー */
 .rank-d {
   background: #999;
+}
+
+.beatmapset-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.beatmapset-card {
+  display: flex;
+  gap: 16px;
+  background: #fafafa;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.beatmapset-cover {
+  width: 140px;
+  height: 100px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.beatmapset-info {
+  padding: 12px 16px 12px 0;
+  min-width: 0;
+}
+
+.beatmapset-info h3 {
+  margin: 0 0 2px 0;
+  font-size: 1.05rem;
+}
+
+.beatmapset-artist {
+  margin: 0;
+  color: #555;
+}
+
+.beatmapset-mapper {
+  margin: 2px 0 8px 0;
+  color: #999;
+  font-size: 0.85rem;
+}
+
+.beatmapset-diffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.diff-badge {
+  background: #eee;
+  color: #555;
+  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 12px;
 }

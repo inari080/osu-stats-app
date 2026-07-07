@@ -25,7 +25,7 @@ app = FastAPI(title="osu! Stats App API")
 # フロントエンドをVercel等にデプロイしたら、そのURLをここに追加する
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
-    "https://osu-stats-app.vercel.app",  # ← フロントエンドのURLが決まったらコメントを外して追加
+    "https://osu-stats-app.vercel.app",
 ]
 
 app.add_middleware(
@@ -118,3 +118,31 @@ async def get_user_best_scores(username: str, mode: str = "osu", limit: int = 10
         )
         scores_resp.raise_for_status()
         return scores_resp.json()
+
+
+@app.get("/api/beatmapsets/search")
+async def search_beatmapsets(q: str, mode: str = "", status: str = "ranked"):
+    """
+    ビートマップセットを検索する。
+    q: 検索キーワード(曲名、アーティスト名など)
+    mode: osu, taiko, fruits, mania (空文字なら全モード)
+    status: ranked, qualified, loved, pending, graveyard, wip, all
+    """
+    token = await get_access_token()
+
+    params = {"query": q}
+    if status and status != "all":
+        params["s"] = status
+    if mode:
+        mode_map = {"osu": "0", "taiko": "1", "fruits": "2", "mania": "3"}
+        if mode in mode_map:
+            params["m"] = mode_map[mode]
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{API_BASE}/beatmapsets/search",
+            headers={"Authorization": f"Bearer {token}"},
+            params=params,
+        )
+        resp.raise_for_status()
+        return resp.json()
