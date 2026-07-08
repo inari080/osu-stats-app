@@ -6,7 +6,7 @@ A web app that searches and displays osu! player stats, beatmaps, and multi-play
 
 ## Demo 🔗
 https://osu-stats-app.vercel.app/
-![Demo screenshot](imgfile/img.png)
+![Demo screenshot](img.png)
 
 ## Tech Stack
 
