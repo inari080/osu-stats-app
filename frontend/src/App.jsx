@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LineChart,
   Line,
@@ -847,10 +847,11 @@ function PlayerSearch() {
   const [scores, setScores] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [topPlayers, setTopPlayers] = useState([]);
+  const [topPlayersLoading, setTopPlayersLoading] = useState(false);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!username.trim()) return;
+  const fetchUser = async (targetUsername, targetMode = mode) => {
+    if (!targetUsername.trim()) return;
 
     setLoading(true);
     setError(null);
@@ -859,7 +860,7 @@ function PlayerSearch() {
 
     try {
       const userRes = await fetch(
-          `${API_BASE}/api/user/${encodeURIComponent(username)}?mode=${mode}`
+          `${API_BASE}/api/user/${encodeURIComponent(targetUsername)}?mode=${targetMode}`
       );
       if (!userRes.ok) {
         throw new Error(
@@ -873,8 +874,8 @@ function PlayerSearch() {
 
       const scoresRes = await fetch(
           `${API_BASE}/api/user/${encodeURIComponent(
-              username
-          )}/scores/best?mode=${mode}&limit=100`
+              targetUsername
+          )}/scores/best?mode=${targetMode}&limit=100`
       );
       if (scoresRes.ok) {
         setScores(await scoresRes.json());
@@ -885,6 +886,45 @@ function PlayerSearch() {
       setLoading(false);
     }
   };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    await fetchUser(username, mode);
+  };
+
+  const handleTopPlayerClick = (name) => {
+    setUsername(name);
+    fetchUser(name, mode);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchTopPlayers = async () => {
+      setTopPlayersLoading(true);
+      try {
+        const res = await fetch(
+            `${API_BASE}/api/rankings/players?mode=${mode}&limit=10`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setTopPlayers(data.ranking ?? []);
+        }
+      } catch {
+        // トッププレイヤー一覧の取得失敗はサイレントに無視(致命的ではないため)
+      } finally {
+        if (!cancelled) setTopPlayersLoading(false);
+      }
+    };
+
+    if (!user) {
+      fetchTopPlayers();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mode, user]);
 
   const singlePlayerResult = user
       ? [{ username: user.username, user, scores, error: null }]
@@ -911,6 +951,33 @@ function PlayerSearch() {
         </form>
 
         {error && <p className="error">{error}</p>}
+
+        {!user && !loading && (
+            <div className="top-players-list">
+              <h3>{t("topPlayersHeading")}</h3>
+              {topPlayersLoading && <p>{t("searchingButton")}</p>}
+              {!topPlayersLoading && topPlayers.length === 0 && (
+                  <p className="error">{t("errorFetchFailedShort")}</p>
+              )}
+              {topPlayers.map((entry) => (
+                  <button
+                      type="button"
+                      key={entry.user?.id ?? entry.global_rank}
+                      className="top-player-row"
+                      onClick={() => handleTopPlayerClick(entry.user?.username)}
+                  >
+                    <span className="top-player-rank">#{entry.global_rank}</span>
+                    <img
+                        src={entry.user?.avatar_url}
+                        alt={entry.user?.username}
+                        className="top-player-avatar"
+                    />
+                    <span className="top-player-name">{entry.user?.username}</span>
+                    <span className="top-player-pp">{entry.pp?.toFixed(0) ?? 0}pp</span>
+                  </button>
+              ))}
+            </div>
+        )}
 
         {user && (
             <div className="user-card">
@@ -1085,22 +1152,36 @@ function BeatmapSearch() {
   const [beatmapsets, setBeatmapsets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
+  const runSearch = async (overrides = {}) => {
+    const effective = {
+      query,
+      mode,
+      status,
+      sort,
+      genre,
+      language,
+      minStar,
+      maxStar,
+      ...overrides,
+    };
 
     setLoading(true);
     setError(null);
     setBeatmapsets([]);
 
     try {
-      const params = new URLSearchParams({ q: query, status });
-      if (mode) params.set("mode", mode);
-      if (sort) params.set("sort", sort);
-      if (genre) params.set("genre", genre);
-      if (language) params.set("language", language);
-      if (minStar !== "") params.set("min_star", minStar);
-      if (maxStar !== "") params.set("max_star", maxStar);
+      const params = new URLSearchParams({
+        q: effective.query,
+        status: effective.status,
+      });
+      if (effective.mode) params.set("mode", effective.mode);
+      if (effective.sort) params.set("sort", effective.sort);
+      if (effective.genre) params.set("genre", effective.genre);
+      if (effective.language) params.set("language", effective.language);
+      if (effective.minStar !== "") params.set("min_star", effective.minStar);
+      if (effective.maxStar !== "") params.set("max_star", effective.maxStar);
 
       const res = await fetch(`${API_BASE}/api/beatmapsets/search?${params}`);
       if (!res.ok) {
@@ -1114,6 +1195,18 @@ function BeatmapSearch() {
       setLoading(false);
     }
   };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    setHasSearched(true);
+    await runSearch();
+  };
+
+  useEffect(() => {
+    // 初期表示: 新しくRankedになったマップ一覧を表示
+    runSearch({ query: "", status: "ranked", sort: "ranked_desc" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
       <>
@@ -1211,6 +1304,10 @@ function BeatmapSearch() {
         </div>
 
         {error && <p className="error">{error}</p>}
+
+        {!hasSearched && !loading && beatmapsets.length > 0 && (
+            <h3 className="default-list-heading">{t("newlyRankedHeading")}</h3>
+        )}
 
         {beatmapsets.length > 0 && (
             <div className="beatmapset-list">

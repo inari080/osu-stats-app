@@ -120,9 +120,27 @@ async def get_user_best_scores(username: str, mode: str = "osu", limit: int = 10
         return scores_resp.json()
 
 
+@app.get("/api/rankings/players")
+async def get_top_players(mode: str = "osu", limit: int = 10):
+    """
+    トッププレイヤーランキング(パフォーマンスランキング)を取得。
+    mode: osu, taiko, fruits, mania
+    """
+    token = await get_access_token()
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(
+            f"{API_BASE}/rankings/{mode}/performance",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        resp.raise_for_status()
+        data = resp.json()
+
+    return {"ranking": data.get("ranking", [])[:limit]}
+
+
 @app.get("/api/beatmapsets/search")
 async def search_beatmapsets(
-    q: str,
+    q: str = "",
     mode: str = "",
     status: str = "ranked",
     sort: str = "",

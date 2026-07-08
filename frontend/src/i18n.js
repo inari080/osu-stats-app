@@ -94,6 +94,9 @@ export const translations = {
         languageNone: "言語: 指定なし",
 
         mappedBy: "mapped by",
+
+        topPlayersHeading: "TOPプレイヤー",
+        newlyRankedHeading: "新しくRankedになったマップ",
     },
 
     en: {
@@ -188,6 +191,9 @@ export const translations = {
         languageNone: "Language: any",
 
         mappedBy: "mapped by",
+
+        topPlayersHeading: "Top Players",
+        newlyRankedHeading: "Newly Ranked Maps",
     },
 };
 
