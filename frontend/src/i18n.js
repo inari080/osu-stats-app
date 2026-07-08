@@ -95,8 +95,10 @@ export const translations = {
 
         mappedBy: "mapped by",
 
-        topPlayersHeading: "TOPプレイヤー",
-        newlyRankedHeading: "新しくRankedになったマップ",
+        topPlayersHeading: "トッププレイヤー",
+        newRankedMapsHeading: "新しくRankedされたビートマップ",
+        loadingText: "読み込み中...",
+        errorRankingsFailed: "ランキングの取得に失敗しました",
     },
 
     en: {
@@ -193,7 +195,9 @@ export const translations = {
         mappedBy: "mapped by",
 
         topPlayersHeading: "Top Players",
-        newlyRankedHeading: "Newly Ranked Maps",
+        newRankedMapsHeading: "Newly Ranked Beatmaps",
+        loadingText: "Loading...",
+        errorRankingsFailed: "Failed to load rankings",
     },
 };
 

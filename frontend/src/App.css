@@ -301,6 +301,39 @@
   background: #999;
 }
 
+.ranking-list {
+  margin-bottom: 24px;
+}
+
+.ranking-row {
+  gap: 12px;
+}
+
+.ranking-position {
+  width: 36px;
+  flex-shrink: 0;
+  color: #999;
+  font-weight: 700;
+}
+
+.ranking-username {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
 .beatmapset-list {
   display: flex;
   flex-direction: column;
@@ -568,65 +601,4 @@
   content: " ↗";
   font-size: 0.8em;
   opacity: 0.6;
-}
-.top-players-list {
-  background: #fafafa;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.top-players-list h3 {
-  margin-top: 0;
-}
-
-.top-player-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 8px 10px;
-  border: none;
-  border-radius: 8px;
-  background: #fff;
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  color: inherit;
-  transition: background 0.15s ease;
-}
-
-.top-player-row:hover {
-  background: #ffe3f0;
-}
-
-.top-player-rank {
-  min-width: 36px;
-  font-weight: 700;
-  color: #ff66ab;
-}
-
-.top-player-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.top-player-name {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.top-player-pp {
-  font-weight: 600;
-  color: #555;
-}
-
-.default-list-heading {
-  margin: 4px 0 12px;
 }
