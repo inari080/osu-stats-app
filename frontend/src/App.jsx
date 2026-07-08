@@ -13,6 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import "./App.css";
+import { LanguageProvider, useLanguage } from "./LanguageContext";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
@@ -67,14 +68,11 @@ function formatDate(dateStr) {
 }
 
 function PpTrendChart({ scores }) {
+  const { t } = useLanguage();
   const data = buildPpTrendData(scores);
 
   if (data.length < 2) {
-    return (
-        <p className="chart-empty">
-          グラフを表示するにはトッププレイのデータが足りません。
-        </p>
-    );
+    return <p className="chart-empty">{t("chartEmpty")}</p>;
   }
 
   return (
@@ -145,15 +143,12 @@ function buildCombinedPpTrendData(playerResults) {
 }
 
 function CombinedPpTrendChart({ playerResults }) {
+  const { t } = useLanguage();
   const validResults = playerResults.filter((r) => !r.error && r.scores?.length);
   const data = buildCombinedPpTrendData(validResults);
 
   if (data.length < 2) {
-    return (
-        <p className="chart-empty">
-          グラフを表示するにはトッププレイのデータが足りません。
-        </p>
-    );
+    return <p className="chart-empty">{t("chartEmpty")}</p>;
   }
 
   return (
@@ -209,37 +204,42 @@ const BASIC_STAT_ROWS = [
 ];
 
 // サブステータスの並列表示用テーブル(レベル・総プレイ時間・Ranked Score等)
-const SUB_STAT_ROWS = [
-  {
-    key: "level",
-    label: "Level",
-    value: (s) =>
-        s?.level?.current != null ? `${s.level.current} (${s.level.progress ?? 0}%)` : "N/A",
-  },
-  {
-    key: "play_time",
-    label: "総プレイ時間",
-    value: (s) => (s?.play_time != null ? `${Math.round(s.play_time / 3600)}時間` : "N/A"),
-  },
-  {
-    key: "ranked_score",
-    label: "Ranked Score",
-    value: (s) => (s?.ranked_score != null ? s.ranked_score.toLocaleString() : "N/A"),
-  },
-  {
-    key: "country_rank",
-    label: "Country Rank",
-    value: (s) => (s?.country_rank ? `#${s.country_rank}` : "N/A"),
-  },
-  {
-    key: "replays_watched",
-    label: "リプレイ視聴数",
-    value: (s) =>
-        s?.replays_watched_by_others != null
-            ? s.replays_watched_by_others.toLocaleString()
-            : "N/A",
-  },
-];
+function getSubStatRows(t) {
+  return [
+    {
+      key: "level",
+      label: t("statLevel"),
+      value: (s) =>
+          s?.level?.current != null ? `${s.level.current} (${s.level.progress ?? 0}%)` : "N/A",
+    },
+    {
+      key: "play_time",
+      label: t("statPlayTime"),
+      value: (s) =>
+          s?.play_time != null
+              ? `${Math.round(s.play_time / 3600)}${t("statPlayTimeSuffix")}`
+              : "N/A",
+    },
+    {
+      key: "ranked_score",
+      label: t("statRankedScore"),
+      value: (s) => (s?.ranked_score != null ? s.ranked_score.toLocaleString() : "N/A"),
+    },
+    {
+      key: "country_rank",
+      label: t("statCountryRank"),
+      value: (s) => (s?.country_rank ? `#${s.country_rank}` : "N/A"),
+    },
+    {
+      key: "replays_watched",
+      label: t("statReplaysWatched"),
+      value: (s) =>
+          s?.replays_watched_by_others != null
+              ? s.replays_watched_by_others.toLocaleString()
+              : "N/A",
+    },
+  ];
+}
 
 function CompareStatsTable({ playerResults, rows = BASIC_STAT_ROWS, mode = "osu" }) {
   return (
@@ -283,6 +283,7 @@ function CompareStatsTable({ playerResults, rows = BASIC_STAT_ROWS, mode = "osu"
 
 // トッププレイの比較(各プレイヤーのTop5を並べて表示)
 function CompareTopPlays({ playerResults, mode = "osu" }) {
+  const { t } = useLanguage();
   return (
       <div className="compare-topplays-grid">
         {playerResults.map(({ username, user, scores, error }, idx) => (
@@ -302,7 +303,7 @@ function CompareTopPlays({ playerResults, mode = "osu" }) {
                 </a>
               </h4>
               {error ? (
-                  <p className="chart-empty">取得できませんでした</p>
+                  <p className="chart-empty">{t("errorFetchFailedShort")}</p>
               ) : (
                   (scores ?? []).slice(0, 5).map((score) => (
                       <div key={score.id} className="score-row">
@@ -357,6 +358,7 @@ function buildDifficultyDistribution(playerResults) {
 }
 
 function DifficultyDistributionChart({ playerResults }) {
+  const { t } = useLanguage();
   const validResults = playerResults.filter((r) => !r.error && r.scores?.length);
   const data = buildDifficultyDistribution(validResults);
   const hasAnyData = data.some((row) =>
@@ -364,11 +366,7 @@ function DifficultyDistributionChart({ playerResults }) {
   );
 
   if (!hasAnyData) {
-    return (
-        <p className="chart-empty">
-          グラフを表示するにはトッププレイのデータが足りません。
-        </p>
-    );
+    return <p className="chart-empty">{t("chartEmpty")}</p>;
   }
 
   return (
@@ -381,7 +379,7 @@ function DifficultyDistributionChart({ playerResults }) {
                 tick={{ fontSize: 11, fill: "#777" }}
                 width={32}
                 allowDecimals={false}
-                label={{ value: "件数", angle: -90, position: "insideLeft", fontSize: 11 }}
+                label={{ value: t("chartCountAxis"), angle: -90, position: "insideLeft", fontSize: 11 }}
             />
             <Tooltip contentStyle={{ fontSize: "0.85rem" }} />
             <Legend wrapperStyle={{ fontSize: "0.85rem" }} />
@@ -439,15 +437,12 @@ function buildCommonBeatmaps(playerResults) {
 }
 
 function CommonBeatmapsTable({ playerResults, mode = "osu" }) {
+  const { t } = useLanguage();
   const validResults = playerResults.filter((r) => !r.error);
   const commonBeatmaps = buildCommonBeatmaps(playerResults);
 
   if (commonBeatmaps.length === 0) {
-    return (
-        <p className="chart-empty">
-          共通のトッププレイ譜面が見つかりませんでした。
-        </p>
-    );
+    return <p className="chart-empty">{t("commonBeatmapsNotFound")}</p>;
   }
 
   return (
@@ -455,7 +450,7 @@ function CommonBeatmapsTable({ playerResults, mode = "osu" }) {
         <table className="compare-stats-table compare-beatmaps-table">
           <thead>
           <tr>
-            <th className="compare-beatmap-col">譜面</th>
+            <th className="compare-beatmap-col">{t("beatmapColumn")}</th>
             {validResults.map(({ username }, idx) => (
                 <th key={username}>
                   <span
@@ -515,17 +510,23 @@ function CommonBeatmapsTable({ playerResults, mode = "osu" }) {
 
 // トッププレイが達成された時間帯(UTC)を4時間区切りで集計する
 const TIME_BUCKETS = [
-  { label: "0-4時", min: 0, max: 4 },
-  { label: "4-8時", min: 4, max: 8 },
-  { label: "8-12時", min: 8, max: 12 },
-  { label: "12-16時", min: 12, max: 16 },
-  { label: "16-20時", min: 16, max: 20 },
-  { label: "20-24時", min: 20, max: 24 },
+  { min: 0, max: 4 },
+  { min: 4, max: 8 },
+  { min: 8, max: 12 },
+  { min: 12, max: 16 },
+  { min: 16, max: 20 },
+  { min: 20, max: 24 },
 ];
 
-function buildActivityTimeDistribution(playerResults) {
+function timeBucketLabel(bucket, lang) {
+  return lang === "ja"
+      ? `${bucket.min}-${bucket.max}時`
+      : `${bucket.min}-${bucket.max}h`;
+}
+
+function buildActivityTimeDistribution(playerResults, lang) {
   return TIME_BUCKETS.map((bucket) => {
-    const row = { bucket: bucket.label };
+    const row = { bucket: timeBucketLabel(bucket, lang) };
     playerResults.forEach(({ username, scores, error }) => {
       if (error) return;
       row[username] = (scores ?? []).filter((s) => {
@@ -539,23 +540,20 @@ function buildActivityTimeDistribution(playerResults) {
 }
 
 function ActivityTimeChart({ playerResults }) {
+  const { t, lang } = useLanguage();
   const validResults = playerResults.filter((r) => !r.error && r.scores?.length);
-  const data = buildActivityTimeDistribution(validResults);
+  const data = buildActivityTimeDistribution(validResults, lang);
   const hasAnyData = data.some((row) =>
       validResults.some(({ username }) => (row[username] ?? 0) > 0)
   );
 
   if (!hasAnyData) {
-    return (
-        <p className="chart-empty">
-          グラフを表示するにはトッププレイのデータが足りません。
-        </p>
-    );
+    return <p className="chart-empty">{t("chartEmpty")}</p>;
   }
 
   return (
       <div className="chart-wrapper">
-        <p className="chart-note">※ 達成時刻はUTC(協定世界時)基準です</p>
+        <p className="chart-note">{t("activityUtcNote")}</p>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={data} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
@@ -564,7 +562,7 @@ function ActivityTimeChart({ playerResults }) {
                 tick={{ fontSize: 11, fill: "#777" }}
                 width={32}
                 allowDecimals={false}
-                label={{ value: "件数", angle: -90, position: "insideLeft", fontSize: 11 }}
+                label={{ value: t("chartCountAxis"), angle: -90, position: "insideLeft", fontSize: 11 }}
             />
             <Tooltip contentStyle={{ fontSize: "0.85rem" }} />
             <Legend wrapperStyle={{ fontSize: "0.85rem" }} />
@@ -596,14 +594,11 @@ function buildAveragePlayerMetric(playerResults, getValue) {
 }
 
 function SimplePlayerBarChart({ data, tooltipLabel, valueSuffix = "" }) {
+  const { t } = useLanguage();
   const hasAnyData = data.some((row) => row.value > 0);
 
   if (!hasAnyData) {
-    return (
-        <p className="chart-empty">
-          グラフを表示するにはトッププレイのデータが足りません。
-        </p>
-    );
+    return <p className="chart-empty">{t("chartEmpty")}</p>;
   }
 
   return (
@@ -630,6 +625,7 @@ function SimplePlayerBarChart({ data, tooltipLabel, valueSuffix = "" }) {
 
 // ミス数・コンボ比較(平均max_combo、平均ミス数)
 function ComboMissCompare({ playerResults }) {
+  const { t } = useLanguage();
   const comboData = buildAveragePlayerMetric(playerResults, (s) =>
       typeof s.max_combo === "number" ? s.max_combo : null
   );
@@ -641,12 +637,12 @@ function ComboMissCompare({ playerResults }) {
   return (
       <div className="compare-dual-chart">
         <div>
-          <h4 className="compare-subheading">平均Max Combo</h4>
-          <SimplePlayerBarChart data={comboData} tooltipLabel="平均Max Combo" valueSuffix="x" />
+          <h4 className="compare-subheading">{t("avgMaxCombo")}</h4>
+          <SimplePlayerBarChart data={comboData} tooltipLabel={t("avgMaxCombo")} valueSuffix="x" />
         </div>
         <div>
-          <h4 className="compare-subheading">平均ミス数(トッププレイ内)</h4>
-          <SimplePlayerBarChart data={missData} tooltipLabel="平均ミス数" valueSuffix="回" />
+          <h4 className="compare-subheading">{t("avgMissCount")}</h4>
+          <SimplePlayerBarChart data={missData} tooltipLabel={t("avgMissCountShort")} valueSuffix={t("avgMissSuffix")} />
         </div>
       </div>
   );
@@ -654,14 +650,16 @@ function ComboMissCompare({ playerResults }) {
 
 // BPM傾向比較(トッププレイの平均BPM)
 function BpmCompare({ playerResults }) {
+  const { t } = useLanguage();
   const bpmData = buildAveragePlayerMetric(playerResults, (s) =>
       typeof s.beatmap?.bpm === "number" ? s.beatmap.bpm : null
   );
 
-  return <SimplePlayerBarChart data={bpmData} tooltipLabel="平均BPM" valueSuffix=" BPM" />;
+  return <SimplePlayerBarChart data={bpmData} tooltipLabel={t("avgBpm")} valueSuffix=" BPM" />;
 }
 
 function PlayerCompare() {
+  const { t } = useLanguage();
   const [usernames, setUsernames] = useState(["", "", ""]);
   const [mode, setMode] = useState("osu");
   const [results, setResults] = useState([]);
@@ -686,7 +684,7 @@ function PlayerCompare() {
     e.preventDefault();
     const targets = usernames.map((u) => u.trim()).filter(Boolean);
     if (targets.length < 2) {
-      setError("2人以上のユーザー名を入力してください");
+      setError(t("errorNeedTwoUsernames"));
       return;
     }
 
@@ -703,8 +701,8 @@ function PlayerCompare() {
             if (!userRes.ok) {
               throw new Error(
                   userRes.status === 404
-                      ? "ユーザーが見つかりません"
-                      : "取得に失敗しました"
+                      ? t("errorUserNotFound")
+                      : t("errorFetchFailed")
               );
             }
             const user = await userRes.json();
@@ -738,7 +736,7 @@ function PlayerCompare() {
                 />
                 <input
                     type="text"
-                    placeholder={`プレイヤー${idx + 1}のユーザー名`}
+                    placeholder={t("comparePlayerPlaceholder", idx + 1)}
                     value={username}
                     onChange={(e) => updateUsername(idx, e.target.value)}
                 />
@@ -747,7 +745,7 @@ function PlayerCompare() {
                         type="button"
                         className="compare-remove-btn"
                         onClick={() => removePlayer(idx)}
-                        aria-label="削除"
+                        aria-label={t("compareRemoveLabel")}
                     >
                       ×
                     </button>
@@ -762,7 +760,7 @@ function PlayerCompare() {
                 onClick={addPlayer}
                 disabled={usernames.length >= 8}
             >
-              + プレイヤーを追加
+              {t("compareAddPlayer")}
             </button>
 
             <select value={mode} onChange={(e) => setMode(e.target.value)}>
@@ -773,7 +771,7 @@ function PlayerCompare() {
             </select>
 
             <button type="submit" disabled={loading}>
-              {loading ? "比較中..." : "比較する"}
+              {loading ? t("comparingButton") : t("compareButton")}
             </button>
           </div>
         </form>
@@ -792,47 +790,47 @@ function PlayerCompare() {
         {results.length > 0 && (
             <>
               <div className="chart-card">
-                <h3>基本ステータス比較</h3>
+                <h3>{t("compareBasicStats")}</h3>
                 <CompareStatsTable playerResults={results} rows={BASIC_STAT_ROWS} mode={mode} />
               </div>
 
               <div className="chart-card">
-                <h3>サブステータス比較</h3>
-                <CompareStatsTable playerResults={results} rows={SUB_STAT_ROWS} mode={mode} />
+                <h3>{t("compareSubStats")}</h3>
+                <CompareStatsTable playerResults={results} rows={getSubStatRows(t)} mode={mode} />
               </div>
 
               <div className="chart-card">
-                <h3>pp推移の比較</h3>
+                <h3>{t("comparePpTrend")}</h3>
                 <CombinedPpTrendChart playerResults={results} />
               </div>
 
               <div className="chart-card">
-                <h3>難易度分布の比較</h3>
+                <h3>{t("compareDifficulty")}</h3>
                 <DifficultyDistributionChart playerResults={results} />
               </div>
 
               <div className="chart-card">
-                <h3>活動時間帯の比較</h3>
+                <h3>{t("compareActivityTime")}</h3>
                 <ActivityTimeChart playerResults={results} />
               </div>
 
               <div className="chart-card">
-                <h3>ミス数・コンボ比較</h3>
+                <h3>{t("compareComboMiss")}</h3>
                 <ComboMissCompare playerResults={results} />
               </div>
 
               <div className="chart-card">
-                <h3>BPM傾向比較</h3>
+                <h3>{t("compareBpm")}</h3>
                 <BpmCompare playerResults={results} />
               </div>
 
               <div className="chart-card">
-                <h3>ビートマップ比較(共通のトッププレイ譜面)</h3>
+                <h3>{t("compareBeatmaps")}</h3>
                 <CommonBeatmapsTable playerResults={results} mode={mode} />
               </div>
 
               <div className="chart-card">
-                <h3>トッププレイの比較</h3>
+                <h3>{t("compareTopPlays")}</h3>
                 <CompareTopPlays playerResults={results} mode={mode} />
               </div>
             </>
@@ -842,6 +840,7 @@ function PlayerCompare() {
 }
 
 function PlayerSearch() {
+  const { t } = useLanguage();
   const [username, setUsername] = useState("");
   const [mode, setMode] = useState("osu");
   const [user, setUser] = useState(null);
@@ -865,8 +864,8 @@ function PlayerSearch() {
       if (!userRes.ok) {
         throw new Error(
             userRes.status === 404
-                ? "ユーザーが見つかりませんでした"
-                : "取得に失敗しました"
+                ? t("errorUserNotFound")
+                : t("errorFetchFailed")
         );
       }
       const userData = await userRes.json();
@@ -896,7 +895,7 @@ function PlayerSearch() {
         <form className="search-form" onSubmit={handleSearch}>
           <input
               type="text"
-              placeholder="osu! ユーザー名"
+              placeholder={t("searchPlaceholderUsername")}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
           />
@@ -907,7 +906,7 @@ function PlayerSearch() {
             <option value="mania">Mania</option>
           </select>
           <button type="submit" disabled={loading}>
-            {loading ? "検索中..." : "検索"}
+            {loading ? t("searchingButton") : t("searchButton")}
           </button>
         </form>
 
@@ -943,42 +942,42 @@ function PlayerSearch() {
 
         {user && (
             <div className="chart-card">
-              <h3>サブステータス</h3>
-              <CompareStatsTable playerResults={singlePlayerResult} rows={SUB_STAT_ROWS} mode={mode} />
+              <h3>{t("subStatsHeading")}</h3>
+              <CompareStatsTable playerResults={singlePlayerResult} rows={getSubStatRows(t)} mode={mode} />
             </div>
         )}
 
         {scores.length > 0 && (
             <div className="chart-card">
-              <h3>pp推移(トッププレイ)</h3>
+              <h3>{t("ppTrendHeading")}</h3>
               <PpTrendChart scores={scores} />
             </div>
         )}
 
         {scores.length > 0 && (
             <div className="chart-card">
-              <h3>活動時間帯</h3>
+              <h3>{t("activityTimeHeading")}</h3>
               <ActivityTimeChart playerResults={singlePlayerResult} />
             </div>
         )}
 
         {scores.length > 0 && (
             <div className="chart-card">
-              <h3>ミス数・コンボ</h3>
+              <h3>{t("comboMissHeading")}</h3>
               <ComboMissCompare playerResults={singlePlayerResult} />
             </div>
         )}
 
         {scores.length > 0 && (
             <div className="chart-card">
-              <h3>BPM傾向</h3>
+              <h3>{t("bpmHeading")}</h3>
               <BpmCompare playerResults={singlePlayerResult} />
             </div>
         )}
 
         {scores.length > 0 && (
             <div className="scores-list">
-              <h3>Top Plays</h3>
+              <h3>{t("topPlaysHeading")}</h3>
               {scores.slice(0, 5).map((score) => (
                   <div key={score.id} className="score-row">
               <span className="beatmap-title">
@@ -1005,67 +1004,76 @@ function PlayerSearch() {
   );
 }
 
-const STATUS_OPTIONS = [
-  { value: "ranked", label: "Ranked" },
-  { value: "qualified", label: "Qualified" },
-  { value: "loved", label: "Loved" },
-  { value: "favourites", label: "お気に入り" },
-  { value: "pending", label: "Pending" },
-  { value: "wip", label: "WIP" },
-  { value: "graveyard", label: "Graveyard" },
-  { value: "any", label: "すべて" },
-];
+function getStatusOptions(t) {
+  return [
+    { value: "ranked", label: t("statusRanked") },
+    { value: "qualified", label: t("statusQualified") },
+    { value: "loved", label: t("statusLoved") },
+    { value: "favourites", label: t("statusFavourites") },
+    { value: "pending", label: t("statusPending") },
+    { value: "wip", label: t("statusWip") },
+    { value: "graveyard", label: t("statusGraveyard") },
+    { value: "any", label: t("statusAny") },
+  ];
+}
 
-const SORT_OPTIONS = [
-  { value: "", label: "関連度(デフォルト)" },
-  { value: "ranked_desc", label: "Ranked日: 新しい順" },
-  { value: "ranked_asc", label: "Ranked日: 古い順" },
-  { value: "plays_desc", label: "プレイ数: 多い順" },
-  { value: "plays_asc", label: "プレイ数: 少ない順" },
-  { value: "difficulty_desc", label: "難易度: 高い順" },
-  { value: "difficulty_asc", label: "難易度: 低い順" },
-  { value: "rating_desc", label: "評価: 高い順" },
-  { value: "favourites_desc", label: "お気に入り: 多い順" },
-  { value: "title_asc", label: "タイトル: A-Z" },
-  { value: "artist_asc", label: "アーティスト: A-Z" },
-];
+function getSortOptions(t) {
+  return [
+    { value: "", label: t("sortDefault") },
+    { value: "ranked_desc", label: t("sortRankedDesc") },
+    { value: "ranked_asc", label: t("sortRankedAsc") },
+    { value: "plays_desc", label: t("sortPlaysDesc") },
+    { value: "plays_asc", label: t("sortPlaysAsc") },
+    { value: "difficulty_desc", label: t("sortDifficultyDesc") },
+    { value: "difficulty_asc", label: t("sortDifficultyAsc") },
+    { value: "rating_desc", label: t("sortRatingDesc") },
+    { value: "favourites_desc", label: t("sortFavouritesDesc") },
+    { value: "title_asc", label: t("sortTitleAsc") },
+    { value: "artist_asc", label: t("sortArtistAsc") },
+  ];
+}
 
-const GENRE_OPTIONS = [
-  { value: "", label: "ジャンル: 指定なし" },
-  { value: "1", label: "Unspecified" },
-  { value: "2", label: "Video Game" },
-  { value: "3", label: "Anime" },
-  { value: "4", label: "Rock" },
-  { value: "5", label: "Pop" },
-  { value: "6", label: "Other" },
-  { value: "7", label: "Novelty" },
-  { value: "9", label: "Hip Hop" },
-  { value: "10", label: "Electronic" },
-  { value: "11", label: "Metal" },
-  { value: "12", label: "Classical" },
-  { value: "13", label: "Folk" },
-  { value: "14", label: "Jazz" },
-];
+function getGenreOptions(t) {
+  return [
+    { value: "", label: t("genreNone") },
+    { value: "1", label: "Unspecified" },
+    { value: "2", label: "Video Game" },
+    { value: "3", label: "Anime" },
+    { value: "4", label: "Rock" },
+    { value: "5", label: "Pop" },
+    { value: "6", label: "Other" },
+    { value: "7", label: "Novelty" },
+    { value: "9", label: "Hip Hop" },
+    { value: "10", label: "Electronic" },
+    { value: "11", label: "Metal" },
+    { value: "12", label: "Classical" },
+    { value: "13", label: "Folk" },
+    { value: "14", label: "Jazz" },
+  ];
+}
 
-const LANGUAGE_OPTIONS = [
-  { value: "", label: "言語: 指定なし" },
-  { value: "1", label: "Unspecified" },
-  { value: "2", label: "English" },
-  { value: "3", label: "Japanese" },
-  { value: "4", label: "Chinese" },
-  { value: "5", label: "Instrumental" },
-  { value: "6", label: "Korean" },
-  { value: "7", label: "French" },
-  { value: "8", label: "German" },
-  { value: "9", label: "Swedish" },
-  { value: "10", label: "Spanish" },
-  { value: "11", label: "Italian" },
-  { value: "12", label: "Russian" },
-  { value: "13", label: "Polish" },
-  { value: "14", label: "Other" },
-];
+function getLanguageOptions(t) {
+  return [
+    { value: "", label: t("languageNone") },
+    { value: "1", label: "Unspecified" },
+    { value: "2", label: "English" },
+    { value: "3", label: "Japanese" },
+    { value: "4", label: "Chinese" },
+    { value: "5", label: "Instrumental" },
+    { value: "6", label: "Korean" },
+    { value: "7", label: "French" },
+    { value: "8", label: "German" },
+    { value: "9", label: "Swedish" },
+    { value: "10", label: "Spanish" },
+    { value: "11", label: "Italian" },
+    { value: "12", label: "Russian" },
+    { value: "13", label: "Polish" },
+    { value: "14", label: "Other" },
+  ];
+}
 
 function BeatmapSearch() {
+  const { t } = useLanguage();
   const [query, setQuery] = useState("");
   const [mode, setMode] = useState("");
   const [status, setStatus] = useState("ranked");
@@ -1096,7 +1104,7 @@ function BeatmapSearch() {
 
       const res = await fetch(`${API_BASE}/api/beatmapsets/search?${params}`);
       if (!res.ok) {
-        throw new Error("検索に失敗しました");
+        throw new Error(t("errorBeatmapSearchFailed"));
       }
       const data = await res.json();
       setBeatmapsets(data.beatmapsets ?? []);
@@ -1112,25 +1120,25 @@ function BeatmapSearch() {
         <form className="search-form" onSubmit={handleSearch}>
           <input
               type="text"
-              placeholder="曲名・アーティスト名で検索"
+              placeholder={t("beatmapSearchPlaceholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
           />
           <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            <option value="">全モード</option>
+            <option value="">{t("modeAll")}</option>
             <option value="osu">osu!</option>
             <option value="taiko">Taiko</option>
             <option value="fruits">Catch</option>
             <option value="mania">Mania</option>
           </select>
           <button type="submit" disabled={loading}>
-            {loading ? "検索中..." : "検索"}
+            {loading ? t("searchingButton") : t("searchButton")}
           </button>
         </form>
 
         <div className="filter-bar">
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            {STATUS_OPTIONS.map((opt) => (
+            {getStatusOptions(t).map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -1138,7 +1146,7 @@ function BeatmapSearch() {
           </select>
 
           <select value={sort} onChange={(e) => setSort(e.target.value)}>
-            {SORT_OPTIONS.map((opt) => (
+            {getSortOptions(t).map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -1146,7 +1154,7 @@ function BeatmapSearch() {
           </select>
 
           <select value={genre} onChange={(e) => setGenre(e.target.value)}>
-            {GENRE_OPTIONS.map((opt) => (
+            {getGenreOptions(t).map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -1154,7 +1162,7 @@ function BeatmapSearch() {
           </select>
 
           <select value={language} onChange={(e) => setLanguage(e.target.value)}>
-            {LANGUAGE_OPTIONS.map((opt) => (
+            {getLanguageOptions(t).map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>
@@ -1167,7 +1175,7 @@ function BeatmapSearch() {
                 step="0.1"
                 min="0"
                 max="15"
-                placeholder="★下限"
+                placeholder={t("starLowerBound")}
                 value={minStar}
                 onChange={(e) => setMinStar(e.target.value)}
             />
@@ -1180,7 +1188,7 @@ function BeatmapSearch() {
                 onChange={(e) => setMinStar(e.target.value)}
                 className="star-slider"
             />
-            <span>〜</span>
+            <span>{t("starRangeSeparator")}</span>
             <input
                 type="range"
                 min="0"
@@ -1195,7 +1203,7 @@ function BeatmapSearch() {
                 step="0.1"
                 min="0"
                 max="15"
-                placeholder="★上限"
+                placeholder={t("starUpperBound")}
                 value={maxStar}
                 onChange={(e) => setMaxStar(e.target.value)}
             />
@@ -1225,7 +1233,7 @@ function BeatmapSearch() {
                         </a>
                       </h3>
                       <p className="beatmapset-artist">{set.artist}</p>
-                      <p className="beatmapset-mapper">mapped by {set.creator}</p>
+                      <p className="beatmapset-mapper">{t("mappedBy")} {set.creator}</p>
                       <div className="beatmapset-diffs">
                         {set.beatmaps?.slice(0, 6).map((b) => (
                             <span key={b.id} className="diff-badge">
@@ -1242,14 +1250,18 @@ function BeatmapSearch() {
   );
 }
 
-function App() {
+function AppContent() {
+  const { t, lang, toggleLang } = useLanguage();
   const [tab, setTab] = useState("player");
 
   return (
       <div className="app">
         <header className="header">
-          <h1>osu! stats</h1>
-          <p className="subtitle">プレイヤー統計・ビートマップを検索</p>
+          <button className="lang-toggle" onClick={toggleLang}>
+            {lang === "ja" ? "English" : "日本語"}
+          </button>
+          <h1>{t("appTitle")}</h1>
+          <p className="subtitle">{t("appSubtitle")}</p>
         </header>
 
         <div className="tabs">
@@ -1257,19 +1269,19 @@ function App() {
               className={`tab-button ${tab === "player" ? "active" : ""}`}
               onClick={() => setTab("player")}
           >
-            プレイヤー検索
+            {t("tabPlayer")}
           </button>
           <button
               className={`tab-button ${tab === "beatmap" ? "active" : ""}`}
               onClick={() => setTab("beatmap")}
           >
-            ビートマップ検索
+            {t("tabBeatmap")}
           </button>
           <button
               className={`tab-button ${tab === "compare" ? "active" : ""}`}
               onClick={() => setTab("compare")}
           >
-            プレイヤー比較
+            {t("tabCompare")}
           </button>
         </div>
 
@@ -1277,6 +1289,14 @@ function App() {
         {tab === "beatmap" && <BeatmapSearch />}
         {tab === "compare" && <PlayerCompare />}
       </div>
+  );
+}
+
+function App() {
+  return (
+      <LanguageProvider>
+        <AppContent />
+      </LanguageProvider>
   );
 }
 
