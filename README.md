@@ -1,67 +1,71 @@
-# osu! stats
+osu! stats
 
-osu! の公式APIを使って、プレイヤーの統計情報(ランク、pp、精度)とトッププレイを検索・表示するWebアプリです。
+English | 日本語
+
+osu! の公式APIを使って、プレイヤーの統計情報・ビートマップ・複数プレイヤー比較を検索・表示するWebアプリです。UIは日本語/英語を切り替えられます。
 
 ## デモ🔗 
 https://osu-stats-app.vercel.app/
 ![デモ画像](img.png)
 
-## 使用技術
+使用技術
 
-- **フロントエンド**: React, Vite
-- **バックエンド**: FastAPI (Python)
-- **API**: [osu! API v2](https://osu.ppy.sh/docs/index.html)(Client Credentials Grant)
 
-## 機能
+フロントエンド: React, Vite, Recharts
+バックエンド: FastAPI (Python)
+API: osu! API v2(Client Credentials Grant)
 
-- osu! ユーザー名でプレイヤーを検索
-- プロフィール統計の表示(グローバルランク、pp、精度、プレイ回数)
-- ゲームモード切り替え(osu!, Taiko, Catch, Mania)
-- トッププレイ(ベストスコア)一覧の表示
 
-## セットアップ
+機能
 
-### 前提条件
 
-- Python 3.10+
-- Node.js 18+
-- [osu! OAuthアプリ](https://osu.ppy.sh/home/account/edit#oauth) の登録(Client ID / Client Secretが必要)
+osu! ユーザー名でプレイヤーを検索(rank, pp, accuracy, play countなどの統計表示)
+ゲームモード切り替え(osu!, Taiko, Catch, Mania)
+トッププレイ(ベストスコア)一覧の表示、ランクバッジの色分け
+pp推移・活動時間帯・コンボ/ミス数・BPM傾向のグラフ表示
+ビートマップ検索(曲名・アーティスト名、難易度・ジャンル・言語などのフィルタ付き)
+プレイヤー比較(最大8人まで、各種統計・グラフ・共通トッププレイ譜面を並べて比較)
+UIの日本語/英語切り替え
 
-### バックエンド
 
-```bash
-cd backend
+セットアップ
+
+前提条件
+
+
+Python 3.10+
+Node.js 18+
+osu! OAuthアプリ の登録(Client ID / Client Secretが必要)
+
+
+バックエンド
+
+bashcd backend
 cp .env.example .env
 # .env を編集して OSU_CLIENT_ID と OSU_CLIENT_SECRET を設定
 
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
-```
 
-### フロントエンド
+フロントエンド
 
-```bash
-cd frontend
+bashcd frontend
 npm install
 npm run dev
-```
 
-ブラウザで `http://localhost:5173` を開いてください。
+ブラウザで http://localhost:5173 を開いてください。
 
-## API エンドポイント
+API エンドポイント
 
-| メソッド | パス | 説明 |
-|---|---|---|
-| GET | `/api/user/{username}` | ユーザーの統計情報を取得 |
-| GET | `/api/user/{username}/scores/best` | ユーザーのトッププレイを取得 |
+メソッドパス説明GET/api/user/{username}ユーザーの統計情報を取得GET/api/user/{username}/scores/bestユーザーのトッププレイを取得GET/api/beatmapsets/searchビートマップセットを検索
 
-## 今後追加したい機能
+今後追加したい機能
 
-- [ ] ビートマップ検索
-- [ ] ユーザー比較機能
-- [ ] pp推移のグラフ表示
-- [ ] お気に入りプレイヤーの保存
 
-## ライセンス
+お気に入りプレイヤーの保存
+より詳細な統計グラフ
+
+
+ライセンス
 
 MIT
